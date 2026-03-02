@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/* Base variables */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* Tailwind theme tokens */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* Base styles */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Design tokens */
+@theme {
+  --breakpoint-xs: 360px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Primary */
+  --color-primary-50:  #f0f1ff;
+  --color-primary-100: #e4e5ff;
+  --color-primary-200: #cdd1ff;
+  --color-primary-300: #a5a8ff;
+  --color-primary-400: #7472ff;
+  --color-primary-500: #483aff;
+  --color-primary-600: #3112ff;
+  --color-primary-700: #1f01ff;
+  --color-primary-800: #1a00e0;
+  --color-primary-900: #1602b0;
+  --color-primary-950: #070078;
+  --color-primary-1000: #04006b;
+  --color-primary-1100: #171c75;
+  --color-primary-1200: #172b75;
+
+  /* Secondary */
+  --color-secondary-50:  #f8fafc;
+  --color-secondary-100: #e9eff5;
+  --color-secondary-200: #cedde9;
+  --color-secondary-300: #a3c1d6;
+  --color-secondary-400: #729fbe;
+  --color-secondary-500: #5083a7;
+  --color-secondary-600: #3d698c;
+  --color-secondary-700: #325572;
+  --color-secondary-800: #2d495f;
+  --color-secondary-900: #293e51;
+  --color-secondary-950: #1b2836;
+
+  /* Silver */
+  --color-silver-50:  #f6f7f8;
+  --color-silver-100: #e9ecf0;
+  --color-silver-200: #d9dde4;
+  --color-silver-300: #bec6d2;
+  --color-silver-400: #aab4c3;
+  --color-silver-500: #8792aa;
+  --color-silver-600: #767f9a;
+  --color-silver-700: #69708c;
+  --color-silver-800: #595e74;
+  --color-silver-900: #4a4e5e;
+  --color-silver-950: #30313b;
+}
+
+/* hide mobile layout on desktop */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+  .desktop-block {
+    display: flex !important;
+  }
+}
+
+/* hide block screen on mobile */
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-block {
+    display: none !important;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(80%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn .18s ease-out;
+}

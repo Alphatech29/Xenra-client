@@ -1,0 +1,123 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+
+export default function Preloader({ onFinish }) {
+  const [mounted, setMounted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [particles, setParticles] = useState([]);
+  const [done, setDone] = useState(false);
+
+  // ensure runs only in browser
+  useEffect(() => {
+    setMounted(true);
+
+    // generate particles ONLY on client
+    const generated = Array.from({ length: 18 }).map(() => ({
+      x: Math.random() * 800 - 400,
+      y: Math.random() * 600 - 300,
+      duration: 4 + Math.random() * 3,
+      delay: Math.random() * 2,
+    }));
+
+    setParticles(generated);
+  }, []);
+
+  // loading simulation
+  useEffect(() => {
+    if (!mounted) return;
+
+    let value = 0;
+
+    const interval = setInterval(() => {
+      value += Math.random() * 10 + 3;
+
+      if (value >= 100) {
+        value = 100;
+        clearInterval(interval);
+
+        setTimeout(() => {
+          setDone(true);
+          setTimeout(onFinish, 700);
+        }, 500);
+      }
+
+      setProgress(Math.floor(value));
+    }, 140);
+
+    return () => clearInterval(interval);
+  }, [mounted, onFinish]);
+
+  // prevent SSR render
+  if (!mounted) return null;
+
+  const letters = "XENRA".split("");
+
+  return (
+    <AnimatePresence>
+      {!done && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 1.08 }}
+          transition={{ duration: 0.9 }}
+          className="fixed inset-0 z-9999 flex items-center justify-center overflow-hidden bg-[#000a35] text-white"
+        >
+          {/* aurora background */}
+          <motion.div
+            className="absolute w-225 h-225 rounded-full blur-[180px]"
+            animate={{
+              background: [
+                "radial-gradient(circle, #6366f1 0%, transparent 60%)",
+                "radial-gradient(circle, #a855f7 0%, transparent 60%)",
+                "radial-gradient(circle, #ec4899 0%, transparent 60%)",
+                "radial-gradient(circle, #6366f1 0%, transparent 60%)",
+              ],
+              rotate: [0, 120, 240, 360],
+            }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          />
+
+          {/* particles */}
+          {particles.map((p, i) => (
+            <motion.span
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-white/40 rounded-full"
+              initial={{ x: p.x, y: p.y, opacity: 0 }}
+              animate={{ y: [p.y, p.y - 40, p.y + 40], opacity: [0, 1, 0] }}
+              transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
+            />
+          ))}
+
+          {/* card */}
+          <div className="relative backdrop-blur-2xl bg-white/5 border border-white/10 px-16 py-14 rounded-4xl">
+            <div className="flex justify-center mb-8 text-4xl font-semibold tracking-[0.35em]">
+              {letters.map((letter, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ y: 60, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.07, duration: 0.9 }}
+                >
+                  {letter}
+                </motion.span>
+              ))}
+            </div>
+
+            <div className="relative w-75 h-2 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="absolute inset-0 bg-linear-to-r from-primary-500 via-secondary-500 to-primary-300"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+
+            <div className="mt-5 text-center text-sm text-white/70 tracking-[0.3em]">
+              {progress}%
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
