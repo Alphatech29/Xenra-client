@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import ModalBottomSheet from "../_components/modal";
 import { useBanks } from "../../../../hooks/useBanks";
@@ -39,15 +40,15 @@ const BankAvatar = ({ name }) => {
     colors.length;
 
   return (
-    <div
-      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${colors[index]}`}
-    >
+    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${colors[index]}`}>
       {initials}
     </div>
   );
 };
 
 export default function SendFundPage() {
+  const router = useRouter();
+
   const { banks } = useBanks();
   const { accountName, loading, error, resolve, reset } = useResolveAccount();
 
@@ -62,22 +63,56 @@ export default function SendFundPage() {
     account_name: "",
   });
 
-  const [verifiedKey, setVerifiedKey] = useState("");
-
   /* ---------------- Recent Beneficiaries ---------------- */
   const [recent, setRecent] = useState([]);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(
-        localStorage.getItem("recent_beneficiaries") || "[]",
-      );
+      const saved = JSON.parse(localStorage.getItem("recent_beneficiaries") || "[]");
       setRecent(saved);
     } catch {
       setRecent([]);
     }
   }, []);
 
+  /* ---------------- TRUE VERIFICATION ---------------- */
+  const isVerified =
+    !!accountName &&
+    bankForm.account_number.length === 10 &&
+    !!bankForm.bank_code &&
+    bankForm.account_name === accountName;
+
+  /* ---------------- SAVE + NAVIGATE ---------------- */
+ const handleProceed = () => {
+  if (!isVerified) return;
+
+  const payload = {
+    account_number: bankForm.account_number,
+    bank_code: bankForm.bank_code,
+    bank_name: bankForm.bank_name,
+    account_name: bankForm.account_name,
+  };
+
+  // save recent
+  setRecent((prev) => {
+    const filtered = prev.filter(
+      (b) =>
+        !(
+          b.account_number === payload.account_number &&
+          b.bank_code === payload.bank_code
+        )
+    );
+
+    const updated = [payload, ...filtered].slice(0, 10);
+    localStorage.setItem("recent_beneficiaries", JSON.stringify(updated));
+    return updated;
+  });
+
+  // 🔥 pass data through navigation state (NOT URL)
+  sessionStorage.setItem("transfer_recipient", JSON.stringify(payload));
+
+  router.push("/dashboard/sendfund/proceed");
+};
   const selectRecent = (b) => {
     setBankForm({
       account_number: b.account_number,
@@ -85,8 +120,6 @@ export default function SendFundPage() {
       bank_name: b.bank_name,
       account_name: b.account_name,
     });
-
-    setVerifiedKey(`${b.account_number}-${b.bank_code}`);
   };
 
   /* ---------------- Filter banks ---------------- */
@@ -94,7 +127,7 @@ export default function SendFundPage() {
     if (!banks) return [];
     if (!bankSearch) return banks;
     return banks.filter((b) =>
-      b.name.toLowerCase().includes(bankSearch.toLowerCase()),
+      b.name.toLowerCase().includes(bankSearch.toLowerCase())
     );
   }, [banks, bankSearch]);
 
@@ -118,42 +151,15 @@ export default function SendFundPage() {
     }
   }, [bankForm.account_number, bankForm.bank_code]);
 
-  /* ---------------- Apply verification + Save recent ---------------- */
+  /* ---------------- Apply resolved name ---------------- */
   useEffect(() => {
     if (!accountName) return;
-
-    const key = `${bankForm.account_number}-${bankForm.bank_code}`;
-    setVerifiedKey(key);
 
     setBankForm((prev) => ({
       ...prev,
       account_name: accountName,
     }));
-
-    const newBeneficiary = {
-      account_number: bankForm.account_number,
-      bank_code: bankForm.bank_code,
-      bank_name: bankForm.bank_name,
-      account_name: accountName,
-    };
-
-    setRecent((prev) => {
-      const filtered = prev.filter(
-        (b) =>
-          !(
-            b.account_number === newBeneficiary.account_number &&
-            b.bank_code === newBeneficiary.bank_code
-          ),
-      );
-
-      const updated = [newBeneficiary, ...filtered].slice(0, 6);
-      localStorage.setItem("recent_beneficiaries", JSON.stringify(updated));
-      return updated;
-    });
   }, [accountName]);
-
-  const isVerified =
-    verifiedKey === `${bankForm.account_number}-${bankForm.bank_code}`;
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
@@ -176,7 +182,6 @@ export default function SendFundPage() {
               bank_code: value.length < 10 ? "" : prev.bank_code,
               bank_name: value.length < 10 ? "" : prev.bank_name,
             }));
-            setVerifiedKey("");
             reset();
           }}
           className="w-full focus:outline-0 rounded-xl placeholder:text-sm bg-white/10 border border-white/10 px-4 py-3 text-white  text-base"
@@ -221,11 +226,12 @@ export default function SendFundPage() {
         )}
 
         <button
+          onClick={handleProceed}
           disabled={!isVerified || loading}
           className={`w-full rounded-xl py-3 font-semibold ${
             isVerified
-              ? "bg-orange-500 text-white"
-              : "bg-gray-700 text-gray-400"
+              ? "bg-primary-500 text-white"
+              : "bg-secondary-700 text-silver-400"
           }`}
         >
           proceed
@@ -236,33 +242,36 @@ export default function SendFundPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Recent</h2>
-          <span className="text-xs text-silver-400">{recent.length} saved</span>
+          <span className="text-xs text-silver-400">
+            {(recent ?? []).length} saved
+          </span>
         </div>
 
-        {recent.length === 0 ? (
+        {(recent ?? []).length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-center h-40 flex flex-col items-center justify-center gap-2">
-            <p className="text-sm text-silver-400">No recent beneficiaries yet</p>
+            <p className="text-sm text-silver-400">
+              No recent beneficiaries yet
+            </p>
             <p className="text-xs text-silver-500 mt-1">
               Accounts you send money to will appear here
             </p>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {recent.map((b, i) => (
+          <div className="grid grid-cols-1 gap-3 justify-start items-start overflow-x-auto pb-1 bg-white/5 rounded-xl p-4 py-6 min-h-60">
+            {(recent ?? []).map((b) => (
               <button
-                key={i}
+                key={`${b.account_number}-${b.bank_name}`}
                 onClick={() => selectRecent(b)}
-                className="min-w-52.5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-3 hover:bg-white/10 transition-all active:scale-[0.97]"
+                className="w-full border-b border-white/10 p-3 active:scale-[0.97] transition-transform"
               >
                 <div className="flex items-center gap-3">
                   <BankAvatar name={b.bank_name} />
                   <div className="flex flex-col text-left">
-                    <span className="text-white text-sm font-medium truncate max-w-32.5">
+                    <span className="text-white text-sm font-medium truncate max-w-48">
                       {b.account_name}
                     </span>
-                    <span className="text-xs text-gray-400">{b.bank_name}</span>
-                    <span className="text-[11px] text-gray-500 tracking-widest">
-                      {b.account_number}
+                    <span className="text-xs text-gray-400">
+                      {b.bank_name} - {b.account_number}
                     </span>
                   </div>
                 </div>
@@ -295,7 +304,6 @@ export default function SendFundPage() {
                   bank_name: formatBankName(bank.name),
                   account_name: "",
                 }));
-                setVerifiedKey("");
                 setBankSheetOpen(false);
               }}
               className="w-full flex justify-between items-center px-4 py-3 rounded-xl hover:bg-white/10"
