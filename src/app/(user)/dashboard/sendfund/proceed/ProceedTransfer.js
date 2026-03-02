@@ -84,7 +84,7 @@ export default function ProceedTransfer() {
         <BankAvatar name={beneficiary.bank_name} />
 
         <div className="flex-1">
-          <p className="text-white font-semibold">
+          <p className="text-white font-semibold line-clamp-2 uppercase">
             {beneficiary.account_name}
           </p>
           <p className="text-xs text-gray-400">
