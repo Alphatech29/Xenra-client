@@ -20,28 +20,31 @@ export function useLogin() {
     };
   }, []);
 
-  const safeSetState = (fn) => {
-    if (mountedRef.current) fn();
+  const safeSetState = (cb) => {
+    if (mountedRef.current) cb();
   };
 
   const login = async (payload) => {
     if (!API_URL) {
-      safeSetState(() => setError("Server configuration error"));
+      safeSetState(() => {
+        setError("Backend API URL not configured");
+      });
       return null;
     }
 
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
-    setMessage(null);
-    setUser(null);
+    safeSetState(() => {
+      setLoading(true);
+      setError(null);
+      setSuccess(false);
+      setMessage(null);
+      setUser(null);
+    });
 
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
 
     try {
-
       const res = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: "POST",
         credentials: "include",
@@ -53,55 +56,62 @@ export function useLogin() {
         signal: controller.signal,
       });
 
-      /* -------- LOG RESPONSE META -------- */
-      const headers = {};
-      res.headers.forEach((v, k) => (headers[k] = v));
+      const result = await res.json();
 
-      /* -------- RAW BODY -------- */
-      const raw = await res.text();
-
-      /* -------- PARSED BODY -------- */
-      let result = {};
-      try {
-        result = raw ? JSON.parse(raw) : {};
-      } catch (e) {
-      }
-
+      // 🚨 Handle HTTP-level failure
       if (!res.ok) {
-        const backendMsg =
-          result?.error ||
-          result?.message ||
-          result?.detail ||
-          result?.msg ||
-          "Login failed";
-        throw new Error(backendMsg);
+        safeSetState(() => {
+          setError(
+            result?.error?.detail ||
+              result?.message ||
+              "Login failed"
+          );
+          setSuccess(false);
+        });
+        return result;
       }
 
-      /* ---------- SUCCESS ---------- */
+      // Strictly rely on backend success flag
+      if (!result.success) {
+        safeSetState(() => {
+          setError(
+            result?.error?.detail ||
+              result?.message ||
+              "Login failed"
+          );
+          setSuccess(false);
+        });
+        return result;
+      }
 
-      const successMsg = result?.message || "Login successful";
+      // Extract user from new structure
+      const backendUser = result?.data?.user || null;
+
+      const normalizedUser = backendUser
+        ? {
+            ...backendUser,
+            is_email_verified: Boolean(
+              backendUser.is_email_verified
+            ),
+          }
+        : null;
 
       safeSetState(() => {
         setSuccess(true);
-        setMessage(successMsg);
-        setUser(result?.user || null);
+        setMessage(result.message || "Login successful");
+        setUser(normalizedUser);
       });
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 150);
-
-      return { success: true, user: result?.user || null };
+      return result;
 
     } catch (err) {
-
-      let msg = "Network error. Try again.";
-      if (err.name === "AbortError") msg = "Request cancelled.";
-      else if (typeof err.message === "string") msg = err.message;
-
-      safeSetState(() => setError(msg));
+      if (err.name !== "AbortError") {
+        safeSetState(() => {
+          setError(err.message || "Network error");
+          setSuccess(false);
+        });
+      }
       return null;
-
     } finally {
       safeSetState(() => setLoading(false));
     }
@@ -109,6 +119,7 @@ export function useLogin() {
 
   return { login, loading, success, error, message, user };
 }
+
 
 export function useRegister() {
   const [loading, setLoading] = useState(false);
@@ -123,7 +134,6 @@ export function useRegister() {
     setSuccess(false);
     setMessage(null);
     setData(null);
-
 
     if (!API_URL) {
       setError("Backend URL not configured");
@@ -142,7 +152,6 @@ export function useRegister() {
         cache: "no-store",
       });
 
-      // 👇 safely parse JSON
       let result = null;
       const text = await res.text();
 
@@ -153,7 +162,9 @@ export function useRegister() {
       }
 
       if (!res.ok) {
-        setError(result?.message || result?.error || `Request failed (${res.status})`);
+        setError(
+          result?.message || result?.error || `Request failed (${res.status})`
+        );
         return null;
       }
 
@@ -168,7 +179,6 @@ export function useRegister() {
 
       return result;
     } catch (err) {
-      console.error("Register error:", err);
       setError(err.message || "Network error. Please try again.");
       return null;
     } finally {
@@ -177,4 +187,87 @@ export function useRegister() {
   };
 
   return { register, loading, success, error, message, data };
+}
+
+
+export function useLogout() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const abortRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
+
+  const safeSetState = (cb) => {
+    if (mountedRef.current) cb();
+  };
+
+  const logout = async () => {
+    if (!API_URL) {
+      safeSetState(() => setError("Backend API URL not configured"));
+      return null;
+    }
+
+    safeSetState(() => {
+      setLoading(true);
+      setError(null);
+      setSuccess(false);
+      setMessage(null);
+    });
+
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result?.success === false) {
+        safeSetState(() => {
+          setError(result?.message || "Logout failed");
+        });
+        return result;
+      }
+
+      // clear client storage
+      sessionStorage.clear();
+      localStorage.clear();
+
+      safeSetState(() => {
+        setSuccess(true);
+        setMessage(result?.message || "Logged out successfully");
+      });
+
+      return result;
+
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        safeSetState(() => {
+          setError(err.message || "Network error");
+        });
+      }
+      return null;
+    } finally {
+      safeSetState(() => setLoading(false));
+    }
+  };
+
+  return { logout, loading, success, error, message };
 }

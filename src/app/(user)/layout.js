@@ -1,5 +1,5 @@
-import Header from "../../components/layout/userheader";
-import Footer from "../../components/layout/userfooter";
+import Header from "./dashboard/_components/layout/userheader";
+import Footer from "./dashboard/_components/layout/userfooter";
 
 export default function PrivateLayout({ children }) {
   return (

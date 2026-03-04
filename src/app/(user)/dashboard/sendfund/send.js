@@ -240,46 +240,46 @@ export default function SendFundPage() {
 
       {/* RECENT BENEFICIARIES */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Recent</h2>
-          <span className="text-xs text-silver-400">
-            {(recent ?? []).length} saved
-          </span>
-        </div>
+  <div className="flex items-center justify-between">
+    <h2 className="text-sm font-semibold text-white">Recent</h2>
+    <span className="text-xs text-silver-400">
+      {(recent ?? []).length} saved
+    </span>
+  </div>
 
-        {(recent ?? []).length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-center h-40 flex flex-col items-center justify-center gap-2">
-            <p className="text-sm text-silver-400">
-              No recent beneficiaries yet
-            </p>
-            <p className="text-xs text-silver-500 mt-1">
-              Accounts you send money to will appear here
-            </p>
+  {(recent ?? []).length === 0 ? (
+    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-center h-40 flex flex-col items-center justify-center gap-2">
+      <p className="text-sm text-silver-400">
+        No recent beneficiaries yet
+      </p>
+      <p className="text-xs text-silver-500 mt-1">
+        Accounts you send money to will appear here
+      </p>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-3 justify-start items-start bg-white/5 rounded-xl p-2 min-h-60">
+      {(recent ?? []).map((b) => (
+        <button
+          key={`${b.account_number}-${b.bank_name}`}
+          onClick={() => selectRecent(b)}
+          className="w-full border-b border-white/10 p-3 transition-transform"
+        >
+          <div className="flex items-center gap-3">
+            <BankAvatar name={b.bank_name} />
+            <div className="flex flex-col text-left">
+              <span className="text-white text-sm font-medium line-clamp-2 max-w-48">
+                {b.account_name}
+              </span>
+              <span className="text-xs text-gray-400">
+                {b.bank_name} - {b.account_number}
+              </span>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 justify-start items-start overflow-x-auto pb-1 bg-white/5 rounded-xl p-4 py-6 min-h-60">
-            {(recent ?? []).map((b) => (
-              <button
-                key={`${b.account_number}-${b.bank_name}`}
-                onClick={() => selectRecent(b)}
-                className="w-full border-b border-white/10 p-3 active:scale-[0.97] transition-transform"
-              >
-                <div className="flex items-center gap-3">
-                  <BankAvatar name={b.bank_name} />
-                  <div className="flex flex-col text-left">
-                    <span className="text-white text-sm font-medium truncate max-w-48">
-                      {b.account_name}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {b.bank_name} - {b.account_number}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
       <ModalBottomSheet
         open={bankSheetOpen}

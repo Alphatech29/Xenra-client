@@ -4,20 +4,37 @@ import { usePathname, useRouter } from "next/navigation";
 import { FaHome, FaWallet, FaBell, FaUser, FaPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
 
+/* moved outside to avoid re-creation every render */
+const menus = [
+  { name: "Home", icon: FaHome, href: "/dashboard" },
+  { name: "Wallet", icon: FaWallet, href: "/dashboard/wallet" },
+  { name: "", icon: FaPlus, action: () => console.log("open modal"), center: true },
+  { name: "Alerts", icon: FaBell, href: "/dashboard/notifications", badge: 3 },
+  { name: "Profile", icon: FaUser, href: "/dashboard/profile" },
+];
+
 export default function Footer() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const menus = [
-    { name: "Home", icon: FaHome, href: "/dashboard" },
-    { name: "Wallet", icon: FaWallet, href: "/wallet" },
-    { name: "", icon: FaPlus, action: () => console.log("open modal"), center: true },
-    { name: "Alerts", icon: FaBell, href: "/notifications", badge: 3 },
-    { name: "Profile", icon: FaUser, href: "/profile" },
-  ];
+  /* robust active matcher */
+  const isActive = (href) => {
+    if (!href) return false;
+
+    const pathParts = pathname.split("/");
+    const hrefParts = href.split("/");
+
+    // Home (/dashboard only)
+    if (hrefParts.length === 2) {
+      return pathname === href;
+    }
+
+    // Compare dashboard section
+    return pathParts[2] === hrefParts[2];
+  };
 
   const navigate = (href) => {
-    if (!href) return;
+    if (!href || pathname === href) return;
     router.push(href);
   };
 
@@ -27,9 +44,7 @@ export default function Footer() {
 
         {menus.map((menu) => {
           const Icon = menu.icon;
-
-          // SAME result on server and client
-          const active = menu.href ? pathname.startsWith(menu.href) : false;
+          const active = isActive(menu.href);
 
           /* CENTER BUTTON */
           if (menu.center) {
@@ -62,7 +77,7 @@ export default function Footer() {
               onClick={() => navigate(menu.href)}
               className="relative flex flex-col items-center justify-center w-full py-2"
             >
-              {/* Always rendered — only opacity changes */}
+              {/* active background */}
               <motion.span
                 layoutId="active-pill"
                 initial={false}

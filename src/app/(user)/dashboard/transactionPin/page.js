@@ -1,13 +1,12 @@
-import ProceedTransfer from "./ProceedTransfer";
+import TransactionPin from "./pin";
 
 export const metadata = {
-  title: "Proceed Transfer",
+  title: "Create Transaction",
     robots: {
     index: false,
     follow: false,
   },
 };
-
 export default function Page() {
-  return <ProceedTransfer />;
+  return <TransactionPin />;
 }

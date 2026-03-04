@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
-
-function log(...args) {
-  console.log("[AUTH-MIDDLEWARE]", ...args);
-}
+import { decodeJwt } from "jose";
 
 export async function middleware(req) {
   const { pathname, search } = req.nextUrl;
-
-  log("------------------------------------------------");
-  log("Route:", pathname + search);
 
   /* ---------------- SKIP STATIC FILES ---------------- */
   if (
@@ -22,38 +16,63 @@ export async function middleware(req) {
 
   /* ---------------- ROUTE GROUPS ---------------- */
   const isDashboardRoute = pathname.startsWith("/dashboard");
-  const isAuthRoute = pathname.startsWith("/auth");
-
-  const isPublicOnlyAuthPage =
-    pathname === "/auth/login" || pathname === "/auth/register";
+  const isVerifyRoute = pathname.startsWith("/auth/verify");
+  const isLoginRoute = pathname.startsWith("/auth/login");
+  const isRegisterRoute = pathname.startsWith("/auth/register");
+  const isLoginOrRegister = isLoginRoute || isRegisterRoute;
 
   /* ---------------- TOKENS ---------------- */
   let accessToken = req.cookies.get("access_token")?.value;
-  let refreshToken = req.cookies.get("refresh_token")?.value;
+  const refreshToken = req.cookies.get("refresh_token")?.value;
 
-  let authenticated = !!accessToken;
+  let authenticated = false;
+  let isEmailVerified = false;
+  let userEmail = null;
 
-  log("access:", !!accessToken, "refresh:", !!refreshToken);
+  let response = NextResponse.next();
+
+  /* ---------------- HELPER: DECODE TOKEN ---------------- */
+  const decodeToken = (token) => {
+    try {
+      const payload = decodeJwt(token);
+      return {
+        authenticated: true,
+        isEmailVerified: Boolean(payload.is_email_verified),
+        email: payload.email || null,
+      };
+    } catch {
+      return {
+        authenticated: false,
+        isEmailVerified: false,
+        email: null,
+      };
+    }
+  };
+
+  /* ---------------- DECODE ACCESS TOKEN ---------------- */
+  if (accessToken) {
+    const decoded = decodeToken(accessToken);
+    authenticated = decoded.authenticated;
+    isEmailVerified = decoded.isEmailVerified;
+    userEmail = decoded.email;
+  }
 
   /* ---------------- SILENT REFRESH ---------------- */
-  if (!accessToken && refreshToken) {
-    log("No access token → attempting refresh");
-
+  if (!authenticated && refreshToken) {
     try {
-      const refreshRes = await fetch(`${req.nextUrl.origin}/api/auth/refresh-token`, {
-        method: "POST",
-        headers: {
-          cookie: `refresh_token=${refreshToken}`,
-        },
-        cache: "no-store",
-      });
-
-      log("refresh status:", refreshRes.status);
+      const refreshRes = await fetch(
+        `${req.nextUrl.origin}/api/auth/refresh-token`,
+        {
+          method: "POST",
+          headers: {
+            cookie: `refresh_token=${refreshToken}`,
+          },
+          cache: "no-store",
+        }
+      );
 
       if (refreshRes.ok) {
         const data = await refreshRes.json();
-
-        const response = NextResponse.next();
 
         response.cookies.set("access_token", data.accessToken, {
           httpOnly: true,
@@ -69,42 +88,65 @@ export async function middleware(req) {
           });
         }
 
-        authenticated = true;
-        log("Refresh success → authenticated");
-        return response;
+        const decoded = decodeToken(data.accessToken);
+        authenticated = decoded.authenticated;
+        isEmailVerified = decoded.isEmailVerified;
+        userEmail = decoded.email;
+
+        accessToken = data.accessToken;
       }
-    } catch (e) {
-      log("Refresh failed:", e.message);
+    } catch {
+      // silent fail
     }
   }
 
-  /* ---------------- PROTECT DASHBOARD ---------------- */
-  if (isDashboardRoute && !authenticated) {
-    log("Redirect → login");
+  /* =========================================================
+     FINAL LOGIC FLOW
+     ========================================================= */
 
-    const loginUrl = new URL("/auth/login", req.url);
-    loginUrl.searchParams.set("from", pathname + search);
+  // 1️⃣ Protect dashboard (must be authenticated AND verified)
+  if (isDashboardRoute) {
+    if (!authenticated) {
+      const loginUrl = new URL("/auth/login", req.url);
+      loginUrl.searchParams.set("from", pathname + search);
+      return NextResponse.redirect(loginUrl);
+    }
 
-    return NextResponse.redirect(loginUrl);
+    if (!isEmailVerified) {
+      const verifyUrl = new URL("/auth/verify", req.url);
+      if (userEmail) {
+        verifyUrl.searchParams.set("email", userEmail);
+      }
+      return NextResponse.redirect(verifyUrl);
+    }
   }
 
-  /* ---------------- RETURN AFTER LOGIN ---------------- */
-  if (isAuthRoute && authenticated) {
+  // 2️⃣ Force unverified authenticated users to verify
+  if (authenticated && !isEmailVerified && !isVerifyRoute) {
+    const verifyUrl = new URL("/auth/verify", req.url);
+    if (userEmail) {
+      verifyUrl.searchParams.set("email", userEmail);
+    }
+    return NextResponse.redirect(verifyUrl);
+  }
+
+  // 3️⃣ Prevent verified users from login/register
+  if (authenticated && isEmailVerified && isLoginOrRegister) {
     const from = req.nextUrl.searchParams.get("from");
+
     if (from && from.startsWith("/")) {
-      log("Return to:", from);
       return NextResponse.redirect(new URL(from, req.url));
     }
-  }
 
-  /* ---------------- BLOCK LOGIN WHEN LOGGED IN ---------------- */
-  if (isPublicOnlyAuthPage && authenticated) {
-    log("Already logged in → dashboard");
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  log("Allow");
-  return NextResponse.next();
+  // 4️⃣ Prevent verified users from verify page
+  if (authenticated && isEmailVerified && isVerifyRoute) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  return response;
 }
 
 export const config = {

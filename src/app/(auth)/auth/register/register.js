@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import FormInput from "../../../../components/ui/formInput";
@@ -10,6 +11,7 @@ import useToast from "../../../../hooks/useToast";
 export default function RegisterPage() {
   const { register, loading, error, success, message } = useRegister();
   const toast = useToast();
+  const router = useRouter();
 
   const successRef = useRef(false);
 
@@ -55,26 +57,45 @@ export default function RegisterPage() {
     });
   };
 
-  // SUCCESS HANDLER (runs once)
-  useEffect(() => {
-    if (!success || successRef.current) return;
 
-    successRef.current = true;
+// SUCCESS HANDLER (runs once)
+useEffect(() => {
+  if (!success || successRef.current) return;
 
-    toast.success(message || "Account created successfully");
+  successRef.current = true;
 
-    // reset form
-    setForm({
-      fullname: "",
-      email: "",
-      phone: "",
-      password: "",
-    });
+  // Capture values BEFORE anything resets
+  const registeredEmail = form.email;
+  const registeredPassword = form.password;
 
-    // clear validation errors
-    setLocalErrors({});
-  }, [success, message, toast]);
+  toast.success(message || "Account created successfully");
 
+  // Store safely
+  const verifyPayload = {
+    email: registeredEmail,
+    password: registeredPassword,
+  };
+
+  sessionStorage.setItem("verifyData", JSON.stringify(verifyPayload));
+
+  // 🔎 Log immediately after storing
+  console.log(
+    "Stored verifyData:",
+    sessionStorage.getItem("verifyData")
+  );
+
+  // Reset form AFTER storing
+  setForm({
+    fullname: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
+
+  setLocalErrors({});
+
+  router.push(`/auth/verify?email=${registeredEmail}`);
+}, [success, message]);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#041031] px-4 text-white">
       <div className="pointer-events-none absolute inset-0">
