@@ -4,13 +4,7 @@ import { useState } from "react";
 import { Copy, CheckCircle } from "lucide-react";
 import useToast from "../../../../hooks/useToast";
 import { useWallet } from "../../../../hooks/useWallet";
-
-/* ------------------ BANK DETAILS ------------------ */
-const BANK = {
-  bank: "Providus Bank",
-  account_name: "Paysparq Technologies Ltd",
-  account_number: "9127056701",
-};
+import { useDedicatedAccount } from "../../../../hooks/useDedicatedAccount";
 
 /* ------------------ CRYPTO DATA ------------------ */
 const CRYPTO = {
@@ -49,6 +43,7 @@ const formatMoney = (amount) => {
 export default function AddFundPage() {
   const toast = useToast();
   const { wallet } = useWallet();
+  const { account } = useDedicatedAccount();
 
   const [method, setMethod] = useState("bank");
   const [asset, setAsset] = useState("usdt");
@@ -60,7 +55,6 @@ export default function AddFundPage() {
     selectedAsset.networks.find((n) => n.id === network) ||
     selectedAsset.networks[0];
 
-  /* ------------------ COPY FUNCTION ------------------ */
   const copy = async (text, key, label) => {
     try {
       if (!navigator?.clipboard) throw new Error("Clipboard not supported");
@@ -79,7 +73,6 @@ export default function AddFundPage() {
   return (
     <div className="min-h-screen text-white p-3 pb-32">
       <div className="max-w-3xl mx-auto space-y-6">
-
         {/* HEADER */}
         <div>
           <h1 className="text-xl font-bold">Add Funds</h1>
@@ -118,42 +111,53 @@ export default function AddFundPage() {
         </div>
 
         {/* ------------------ BANK UI ------------------ */}
-        {method === "bank" && (
+        {method === "bank" && account && (
           <>
-            <div className="rounded-3xl p-6 bg-linear-to-br from-primary-950 to-secondary-800 border border-white/10 space-y-5">
+            <div className="relative rounded-3xl p-4 bg-linear-to-br from-primary-950 via-primary-1200 to-white/15 border border-white/10 shadow-xl overflow-hidden">
+              {/* Card Glow */}
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_left,white,transparent_60%)]"></div>
 
-              <div className="flex justify-between items-center">
+              {/* Top Row */}
+              <div className="flex justify-between items-start relative z-10">
                 <div>
-                  <p className="text-gray-400 text-sm">Account Number</p>
-                  <h3 className="text-base font-bold tracking-widest">
-                    {BANK.account_number}
-                  </h3>
+                  <p className="text-xs text-gray-400 uppercase tracking-wider">
+                    Virtual Account
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {account.bank_name}
+                  </p>
                 </div>
 
                 <button
                   onClick={() =>
-                    copy(BANK.account_number, "acc", "Account number")
+                    copy(account.account_number, "acc", "Account number")
                   }
-                  className="text-sm bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20 flex gap-2 items-center"
+                  className="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 flex gap-2 items-center backdrop-blur"
                 >
                   {copied === "acc" ? (
-                    <CheckCircle size={16} />
+                    <CheckCircle size={14} />
                   ) : (
-                    <Copy size={16} />
+                    <Copy size={14} />
                   )}
                   Copy
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-400">Bank</p>
-                  <p className="font-semibold">{BANK.bank}</p>
-                </div>
+              {/* Chip */}
+              <div className="mt-6 mb-4 w-10 h-7 rounded-md bg-linear-to-br from-yellow-400 to-yellow-600"></div>
 
-                <div>
-                  <p className="text-gray-400">Account Name</p>
-                  <p className="font-semibold text-sm">{BANK.account_name}</p>
+              {/* Account Number */}
+              <h3 className="text-xl font-bold tracking-[0.25em] text-white mb-6">
+                {account.account_number}
+              </h3>
+
+              {/* Bottom Section */}
+              <div className="flex justify-between items-end text-sm text-white/90">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400">Account Name</p>
+                  <p className="font-semibold text-sm wrap-break-word uppercase">
+                    {account.account_name}
+                  </p>
                 </div>
               </div>
             </div>
@@ -180,7 +184,6 @@ export default function AddFundPage() {
         {/* ------------------ CRYPTO UI ------------------ */}
         {method === "crypto" && (
           <>
-            {/* ASSET SELECT */}
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(CRYPTO).map(([key, value]) => (
                 <button
@@ -200,9 +203,7 @@ export default function AddFundPage() {
               ))}
             </div>
 
-            {/* QR + ADDRESS */}
             <div className="rounded-3xl bg-primary-900/20 border border-white/10 p-4 space-y-5">
-
               <h3 className="text-base font-semibold">
                 Send {selectedAsset.name} ({selectedNetwork.label})
               </h3>
@@ -232,10 +233,8 @@ export default function AddFundPage() {
                 )}
                 Copy Wallet Address
               </button>
-
             </div>
 
-            {/* WARNING */}
             <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-300 space-y-1">
               <p className="font-semibold">Network Warning</p>
               <p>
@@ -247,11 +246,11 @@ export default function AddFundPage() {
             </div>
 
             <div className="text-xs text-gray-400 text-center">
-              Deposits are credited after blockchain confirmation (1 – 15 minutes)
+              Deposits are credited after blockchain confirmation (1 – 15
+              minutes)
             </div>
           </>
         )}
-
       </div>
     </div>
   );

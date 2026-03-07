@@ -9,16 +9,33 @@ export const useWallet = () => {
   const fetchWallet = useCallback(async () => {
     try {
       const data = await getUserWallet();
-
-      setWallet(data);
+      setWallet(data || null);
     } catch (err) {
       console.error("Wallet error:", err);
     }
   }, []);
 
   useEffect(() => {
-    fetchWallet();
-  }, [fetchWallet]);
+    let isMounted = true;
+
+    const loadWallet = async () => {
+      try {
+        const data = await getUserWallet();
+
+        if (isMounted) {
+          setWallet(data || null);
+        }
+      } catch (err) {
+        console.error("Wallet error:", err);
+      }
+    };
+
+    loadWallet();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return { wallet, refetch: fetchWallet };
 };
