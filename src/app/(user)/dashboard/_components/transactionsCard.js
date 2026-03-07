@@ -7,22 +7,36 @@ import {
   Clock3,
   CheckCircle2,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const statusMeta = {
   completed: {
-    label: "Completed",
+    label: "Successful",
+    cls: "text-emerald-500",
+    glow: "shadow-emerald-500/20",
+    icon: CheckCircle2,
+  },
+  successful: {
+    label: "Successful",
     cls: "text-emerald-500",
     glow: "shadow-emerald-500/20",
     icon: CheckCircle2,
   },
   pending: {
-    label: "Processing",
+    label: "Pending",
     cls: "text-amber-400",
     glow: "shadow-amber-400/30",
     pulse: true,
     icon: Clock3,
+  },
+  processing: {
+    label: "Processing",
+    cls: "text-yellow-400",
+    glow: "shadow-yellow-400/30",
+    pulse: true,
+    icon: Loader2,
   },
   failed: {
     label: "Failed",
@@ -45,19 +59,34 @@ const initials = (name = "") =>
     .map((n) => n[0]?.toUpperCase())
     .join("");
 
+/* Safe formatter for transaction names */
+const formatName = (name = "") => {
+  if (!name) return "Transaction";
+
+  return name
+    .toString()
+    .split(" ")
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1).toLowerCase()
+    )
+    .join(" ");
+};
+
 export default function TransactionsCard({
   title = "Recent Activity",
   transactions = [],
   currencyCode = "NGN",
 }) {
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-primary-500/10 bg-primary-600/5">
+    <div className="relative w-full min-h-80 rounded-2xl overflow-hidden border border-primary-500/10 bg-primary-600/5">
 
       {/* Glass highlight */}
       <div className="absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
 
       {/* HEADER */}
-      <div className="sticky top-0 z-10  bg-white/5 border-b border-white/10">
+      <div className="sticky top-0 z-10 bg-white/5 border-b border-white/10">
         <div className="p-3 flex justify-between items-start">
           <div>
             <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
@@ -67,13 +96,10 @@ export default function TransactionsCard({
 
       {/* BODY */}
       <div className="p-4 overflow-y-auto relative">
-        {/* scroll fade */}
-        <div />
-
         <div className="space-y-3">
           {transactions.map((tx, index) => {
-            const meta =
-              statusMeta[tx.status] || statusMeta.completed;
+            const statusKey = tx.status?.toLowerCase();
+            const meta = statusMeta[statusKey] || statusMeta.pending;
             const StatusIcon = meta.icon;
 
             return (
@@ -81,7 +107,11 @@ export default function TransactionsCard({
                 key={tx.id || index}
                 initial={{ opacity: 0, y: 30, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: index * 0.035, type: "spring", stiffness: 120 }}
+                transition={{
+                  delay: index * 0.035,
+                  type: "spring",
+                  stiffness: 120,
+                }}
                 whileHover={{ y: -3, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 className="group relative flex justify-between items-center py-2 border-b border-primary-400/15 hover:bg-primary-400/5 transition-all duration-300 cursor-pointer"
@@ -102,15 +132,14 @@ export default function TransactionsCard({
                       <ArrowUpRight className="size-5" />
                     )}
 
-                    {/* avatar badge */}
                     <span className="absolute -bottom-1 -right-1 size-5 rounded-full bg-background border border-white/20 grid place-items-center text-[10px] font-semibold">
                       {initials(tx.name)}
                     </span>
                   </motion.div>
 
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium truncate text-sm">
-                      {tx.name}
+                    <span className="font-medium truncate max-w-37.5 text-sm">
+                      {formatName(tx.name)}
                     </span>
                     <span className="text-[11px] text-silver-500 text-muted-foreground truncate">
                       {tx.date}
@@ -131,7 +160,7 @@ export default function TransactionsCard({
                     }`}
                   >
                     {tx.type === "credit" ? "+" : "-"}
-                    {currency(tx.amount)}
+                    {currency(tx.amount, currencyCode)}
                   </motion.span>
 
                   <span

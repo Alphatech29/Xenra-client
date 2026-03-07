@@ -24,7 +24,6 @@ export const createTransactionPin = async (pin) => {
       throw createClientError(400, "Transaction PIN is required");
     }
 
-    // Send PIN directly
     const res = await api.post("/api/v1/users/create-pin", pin);
 
     const payload = res.data;
@@ -39,6 +38,7 @@ export const createTransactionPin = async (pin) => {
     return payload;
 
   } catch (err) {
+
     if (err.response) {
       const status = err.response.status;
       const message =
@@ -55,5 +55,72 @@ export const createTransactionPin = async (pin) => {
     }
 
     throw createClientError(500, "Unexpected error occurred");
+  }
+};
+
+
+/* ---------------- CHANGE TRANSACTION PIN ---------------- */
+export const changeTransactionPin = async ({ oldPin, newPin }) => {
+  try {
+
+    /* ---------- Validation ---------- */
+
+    if (!oldPin || !newPin) {
+      throw createClientError(400, "Old PIN and New PIN are required");
+    }
+
+    if (String(newPin).length !== 4) {
+      throw createClientError(400, "New PIN must be 4 digits");
+    }
+
+    /* ---------- API Request ---------- */
+
+    const res = await api.post("/api/v1/users/change-pin", {
+      oldPin,
+      newPin,
+    });
+
+    const payload = res.data;
+
+    if (!payload?.success) {
+      throw createClientError(
+        400,
+        payload?.message || "Failed to change transaction PIN"
+      );
+    }
+
+    return payload;
+
+  } catch (err) {
+
+    /* ---------- Backend Error ---------- */
+
+    if (err.response) {
+      const status = err.response.status;
+
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Unable to change transaction PIN.";
+
+      throw createClientError(status, message);
+    }
+
+    /* ---------- Network Error ---------- */
+
+    if (err.request) {
+      throw createClientError(
+        503,
+        "Network error. Check your connection and retry."
+      );
+    }
+
+    /* ---------- Unknown Error ---------- */
+
+    throw createClientError(
+      500,
+      err.message || "Unexpected error occurred"
+    );
   }
 };

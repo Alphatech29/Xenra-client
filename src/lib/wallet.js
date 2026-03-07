@@ -14,10 +14,10 @@ const api = axios.create({
   withCredentials: true,
 });
 
-/* ---------------- Get Authenticated User ---------------- */
-export const getUser = async () => {
+/* ---------------- Get User Wallet ---------------- */
+export const getUserWallet = async () => {
   try {
-    const response = await api.get("/api/v1/users/user");
+    const response = await api.get("/api/v1/users/wallet");
 
     const payload = response?.data;
 
@@ -26,7 +26,7 @@ export const getUser = async () => {
     }
 
     if (payload.success !== true) {
-      throw new Error(payload.message || "Failed to fetch user");
+      throw new Error(payload.message || "Failed to fetch wallet");
     }
 
     return payload.data;
@@ -37,11 +37,11 @@ export const getUser = async () => {
         error.response?.data?.message ||
         error.response?.data?.error ||
         error.message ||
-        "Unable to fetch user";
+        "Unable to fetch wallet";
 
       throw new Error(message);
     }
 
-    throw new Error("Unexpected user fetch error");
+    throw new Error("Unexpected wallet fetch error");
   }
 };

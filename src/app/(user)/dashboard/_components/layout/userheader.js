@@ -4,14 +4,29 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaBell } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useUser } from "../../../../../hooks/useUser";
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export default function Header() {
+  const { user } = useUser();
+
+  const getInitials = (name = "") => {
+    if (!name) return "?";
+
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0][0]?.toUpperCase();
+
+    return ((parts[0][0] || "") + (parts[1][0] || "")).toUpperCase();
+  };
+
+  const avatar = user?.avatar;
+  const name = user?.full_name || "";
+
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-primary-1200">
       <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-
+        
         {/* Logo */}
         <div className="flex items-center gap-2">
           <div className="h-9 w-9 rounded-xl bg-linear-to-tr from-primary-900 to-primary-700 flex items-center justify-center shadow-lg">
@@ -19,7 +34,9 @@ export default function Header() {
           </div>
 
           <div className="leading-tight">
-            <h1 className="text-lg font-semibold text-silver-100 tracking-wide">Xenra</h1>
+            <h1 className="text-lg font-semibold text-silver-100 tracking-wide">
+              Xenra
+            </h1>
             <p className="text-[10px] text-secondary-400">Smart payments</p>
           </div>
         </div>
@@ -37,23 +54,30 @@ export default function Header() {
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(255,0,0,0.7)]" />
           </motion.button>
 
+          {/* Profile */}
           <MotionLink
             href="/dashboard/profile"
             whileTap={{ scale: 0.92 }}
             className="relative block"
           >
-            <Image
-              src="/images/avatar.jpg"
-              alt="User profile"
-              width={36}
-              height={36}
-              sizes="36px"
-              className="rounded-full ring-2 ring-primary-900/60 object-cover"
-            />
+            {avatar ? (
+              <Image
+                src={avatar}
+                alt="User profile"
+                width={36}
+                height={36}
+                sizes="36px"
+                className="rounded-full ring-2 ring-primary-900/30 object-cover"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full ring-2 ring-primary-900/30 bg-white/15 flex items-center justify-center text-xs font-semibold text-white">
+                {getInitials(name)}
+              </div>
+            )}
+
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-primary-1100" />
           </MotionLink>
         </div>
-
       </div>
     </header>
   );

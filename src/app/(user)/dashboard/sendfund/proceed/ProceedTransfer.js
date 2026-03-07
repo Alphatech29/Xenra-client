@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft, ShieldCheck, Landmark } from "lucide-react";
+import { ArrowLeft, ShieldCheck, CircleCheck, Landmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ModalBottomSheet from "../../_components/modal";
@@ -23,11 +23,12 @@ export default function ProceedTransfer() {
   const router = useRouter();
 
   const {
-    beneficiary,
-    note,
-    setNote,
-    pin,
-    inputs,
+     beneficiary,
+  note,
+  setNote,
+  pin,
+  setPin,
+  inputs,
 
     openPreview,
     askPin,
@@ -38,10 +39,13 @@ export default function ProceedTransfer() {
     setAskPin,
     setOpenPreview,
 
+    amount,
     numericAmount,
     fee,
     total,
     canContinue,
+
+    balance,
 
     handleAmountChange,
     handlePinChange,
@@ -56,10 +60,8 @@ export default function ProceedTransfer() {
   const handleAuthorize = async () => {
     await initiateTransfer();
   };
-
   return (
     <div className="max-w-md mx-auto pb-32 px-4 py-6 space-y-4">
-
       {/* HEADER */}
       <div className="flex items-center gap-3">
         <button
@@ -102,12 +104,17 @@ export default function ProceedTransfer() {
 
           <input
             type="tel"
-            inputMode="numeric"
-            value={format(numericAmount)}
+            inputMode="decimal"
+            value={amount}
             onChange={handleAmountChange}
             placeholder="0"
             className="w-full text-center bg-transparent border-none outline-none text-white text-4xl font-bold tracking-tight py-3 caret-orange-400"
           />
+        </div>
+
+        <div className="text-xs text-gray-400">
+          Available balance:{" "}
+          <span className="text-white">₦{format(balance)}</span>
         </div>
 
         <div className="text-xs text-gray-500">Instant transfer</div>
@@ -176,13 +183,15 @@ export default function ProceedTransfer() {
 
       {/* MODAL */}
       <ModalBottomSheet
-        open={openPreview}
-        onClose={() => {
-          if (processing || success) return;
-          setOpenPreview(false);
-        }}
-      >
+         open={openPreview}
+  onClose={() => {
+    if (processing || success) return;
 
+    setPin(["", "", "", ""]); // reset PIN
+    setAskPin(false);
+    setOpenPreview(false);
+  }}
+      >
         {/* ERROR */}
         {error && !processing && !success && (
           <div className="mx-5 mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm text-center">
@@ -193,13 +202,12 @@ export default function ProceedTransfer() {
         {/* SUCCESS */}
         {success && (
           <div className="flex flex-col items-center justify-center gap-6 py-12 text-center">
-
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
             >
-              <ShieldCheck className="text-primary-400" size={36} />
+              <CircleCheck className="text-primary-400" size={40} />
             </motion.div>
 
             <div>
@@ -225,7 +233,6 @@ export default function ProceedTransfer() {
             >
               Done
             </button>
-
           </div>
         )}
 
@@ -234,16 +241,13 @@ export default function ProceedTransfer() {
           <div className="flex flex-col items-center gap-6 py-16">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
 
-            <p className="text-white font-semibold">
-              Processing Transfer...
-            </p>
+            <p className="text-white font-semibold">Processing Transfer...</p>
           </div>
         )}
 
         {/* CONFIRM */}
         {!processing && !askPin && !success && (
           <div className="p-5 space-y-4">
-
             <h3 className="text-white text-lg font-semibold text-center">
               Confirm Transfer
             </h3>
@@ -274,14 +278,12 @@ export default function ProceedTransfer() {
             >
               Confirm Transfer
             </button>
-
           </div>
         )}
 
         {/* PIN */}
         {!processing && askPin && !success && (
           <div className="p-6 space-y-6 text-center">
-
             <h3 className="text-white text-lg font-semibold">
               Enter Transaction PIN
             </h3>
@@ -308,12 +310,9 @@ export default function ProceedTransfer() {
             >
               Authorize Transfer
             </button>
-
           </div>
         )}
-
       </ModalBottomSheet>
-
     </div>
   );
 }

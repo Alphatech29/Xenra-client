@@ -1,44 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransactionPin } from "../../../../hooks/useTransactionPin";
 import AlertModal from "../../dashboard/_components/alertModal";
+import { useUser } from "../../../../hooks/useUser";
 
 export default function TransactionPin({ mode = "create" }) {
   const router = useRouter();
+  const { user } = useUser();
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const {
-    pin,
-    error,
-    inputRef,
-    handleChange,
-    handleSubmit,
-    getTitle,
-  } = useTransactionPin(mode);
+  /* Determine actual mode based on user PIN status */
+  const actualMode = useMemo(() => {
+    if (!user) return mode;
 
+    const pinCreated = Number(user?.is_pin_created);
+
+    return pinCreated === 1 ? "change" : "create";
+  }, [user, mode]);
+
+  const { pin, error, inputRef, handleChange, handleSubmit, getTitle } =
+    useTransactionPin(actualMode);
+
+  /* Handle submit */
   const submitPin = async () => {
     if (loading) return;
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const result = await handleSubmit();
+      const result = await handleSubmit();
 
-    setLoading(false);
-
-    if (result === "success") {
-      setShowSuccess(true);
+      if (result === "success") {
+        setShowSuccess(true);
+      }
+    } catch (err) {
+      console.error("PIN operation failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* Wait until user loads */
+  if (!user) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-12 h-12 border-4 border-primary-400 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pb-32 flex flex-col text-white px-4 py-6">
-
-      {/* FULL SCREEN LOADER */}
+      {/* Loader during submit */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
           <motion.div
@@ -68,7 +91,6 @@ export default function TransactionPin({ mode = "create" }) {
           animate={{ opacity: 1, y: 0 }}
           className="relative w-full max-w-md backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 space-y-8"
         >
-
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 rounded-full bg-primary-400/10 flex items-center justify-center">
@@ -111,9 +133,7 @@ export default function TransactionPin({ mode = "create" }) {
             {[0, 1, 2, 3].map((i) => (
               <motion.div
                 key={i}
-                animate={{
-                  scale: pin.length > i ? 1.15 : 1,
-                }}
+                animate={{ scale: pin.length > i ? 1.15 : 1 }}
                 className={`w-6 h-6 rounded-full border-2 transition ${
                   pin.length > i
                     ? "bg-primary-400 border-primary-400"
@@ -133,22 +153,29 @@ export default function TransactionPin({ mode = "create" }) {
           >
             {loading ? "Processing..." : "Continue"}
           </motion.button>
-
         </motion.div>
       </div>
 
-      {/* SUCCESS MODAL */}
+      {/* Success Modal */}
       {showSuccess && (
         <AlertModal
           type="success"
-          title="PIN Created Successfully"
-          message="Your transaction PIN has been set. You can now make secure transfers."
+          title={
+            actualMode === "create"
+              ? "PIN Created Successfully"
+              : "PIN Updated Successfully"
+          }
+          message={
+            actualMode === "create"
+              ? "Your transaction PIN has been set. You can now make secure transfers."
+              : "Your transaction PIN has been changed successfully."
+          }
           onClose={() => {
             setShowSuccess(false);
+            router.refresh();
           }}
         />
       )}
-
     </div>
   );
 }

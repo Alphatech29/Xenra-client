@@ -2,8 +2,12 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { transfer } from "../lib/transfer";
+import { useWallet } from "./useWallet";
 
 export const useTransfer = () => {
+  const { wallet } = useWallet();
+  const balance = wallet?.available_balance || 0;
+
   const [beneficiary, setBeneficiary] = useState(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -18,6 +22,8 @@ export const useTransfer = () => {
 
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+
+  const [insufficientBalance, setInsufficientBalance] = useState(false);
 
   /* -------- Load Recipient -------- */
   useEffect(() => {
@@ -34,19 +40,33 @@ export const useTransfer = () => {
 
   /* -------- Amount Handling -------- */
   const handleAmountChange = (e) => {
-    const raw = e.target.value
-      .replace(/,/g, "")
-      .replace(/\D/g, "");
+    let value = e.target.value;
 
-    if (raw.length > 9) return;
+    value = value.replace(/,/g, "");
+    value = value.replace(/[^0-9.]/g, "");
 
-    setAmount(raw);
+    const parts = value.split(".");
+    if (parts.length > 2) {
+      value = parts[0] + "." + parts[1];
+    }
+
+    if (value.includes(".")) {
+      const [whole, decimal] = value.split(".");
+      value = whole + "." + decimal.slice(0, 2);
+    }
+
+    if (value.replace(".", "").length > 9) return;
+
+    setAmount(value);
   };
 
-  const numericAmount = Number(amount || 0);
+  const numericAmount = parseFloat(amount) || 0;
 
   const format = (val) =>
-    new Intl.NumberFormat("en-NG").format(val || 0);
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(val || 0);
 
   /* -------- Charges -------- */
   const fee = useMemo(() => {
@@ -59,7 +79,18 @@ export const useTransfer = () => {
   }, [numericAmount]);
 
   const total = numericAmount + fee;
-  const canContinue = numericAmount > 0;
+
+  /* -------- Auto Balance Check -------- */
+  useEffect(() => {
+    if (!numericAmount) {
+      setInsufficientBalance(false);
+      return;
+    }
+
+    setInsufficientBalance(total > balance);
+  }, [numericAmount, total, balance]);
+
+  const canContinue = numericAmount > 0 && !insufficientBalance;
 
   /* -------- Transfer Payload -------- */
   const transferPayload = useMemo(() => {
@@ -117,20 +148,17 @@ export const useTransfer = () => {
     }
   }, [askPin]);
 
-  /* -------- Extract Error Message -------- */
+  /* -------- Error Helper -------- */
   const getErrorMessage = (err) => {
     if (!err) return "Transfer failed";
 
     if (typeof err === "string") return err;
 
-    if (err?.response?.data?.message)
-      return err.response.data.message;
+    if (err?.response?.data?.message) return err.response.data.message;
 
-    if (err?.response?.data?.error)
-      return err.response.data.error;
+    if (err?.response?.data?.error) return err.response.data.error;
 
-    if (err?.message)
-      return err.message;
+    if (err?.message) return err.message;
 
     if (err?.name === "TypeError")
       return "Network error. Please check your connection.";
@@ -138,8 +166,13 @@ export const useTransfer = () => {
     return "Something went wrong. Please try again.";
   };
 
-  /* -------- Initiate Transfer API -------- */
+  /* -------- Initiate Transfer -------- */
   const initiateTransfer = useCallback(async () => {
+    if (insufficientBalance) {
+      setError("Insufficient wallet balance");
+      return null;
+    }
+
     if (!transferPayload) {
       setError("Transfer data missing");
       return null;
@@ -155,7 +188,6 @@ export const useTransfer = () => {
       setSuccess(true);
 
       return response;
-
     } catch (err) {
       const message = getErrorMessage(err);
 
@@ -165,18 +197,19 @@ export const useTransfer = () => {
       setSuccess(false);
 
       return null;
-
     } finally {
       setProcessing(false);
     }
-  }, [transferPayload]);
+  }, [transferPayload, insufficientBalance]);
 
   return {
     beneficiary,
     note,
     pin,
+    setPin, // ✅ FIX ADDED
     inputs,
 
+    amount,
     openPreview,
     askPin,
     processing,
@@ -185,9 +218,11 @@ export const useTransfer = () => {
     numericAmount,
     fee,
     total,
+    balance,
     canContinue,
-    transferPayload,
+    insufficientBalance,
 
+    transferPayload,
     data,
     error,
 

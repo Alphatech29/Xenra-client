@@ -14,22 +14,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
-/* ---------------- Get Authenticated User ---------------- */
-export const getUser = async () => {
+/* ---------------- Get Transaction History ---------------- */
+export const getTransactionHistory = async () => {
   try {
-    const response = await api.get("/api/v1/users/user");
+    const response = await api.get("/api/v1/users/history");
 
     const payload = response?.data;
 
-    if (!payload) {
-      throw new Error("Invalid server response");
+    if (!payload || payload.success !== true) {
+      throw new Error(payload?.message || "Failed to fetch transaction history");
     }
 
-    if (payload.success !== true) {
-      throw new Error(payload.message || "Failed to fetch user");
-    }
-
-    return payload.data;
+    return payload.data.transactions;
 
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -37,11 +33,11 @@ export const getUser = async () => {
         error.response?.data?.message ||
         error.response?.data?.error ||
         error.message ||
-        "Unable to fetch user";
+        "Unable to fetch transaction history";
 
       throw new Error(message);
     }
 
-    throw new Error("Unexpected user fetch error");
+    throw new Error("Unexpected transaction history error");
   }
 };

@@ -5,21 +5,17 @@ import Link from "next/link";
 import { FaPlus } from "react-icons/fa6";
 import { FiSend } from "react-icons/fi";
 import { Eye, EyeOff } from "lucide-react";
+import { useWallet } from "../../../../hooks/useWallet";
 
 export default function BalanceCard() {
+  const { wallet } = useWallet();
+
   const [hidden, setHidden] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [balance, setBalance] = useState(20000);
 
-  // runs AFTER hydration (safe)
   useEffect(() => {
     const saved = localStorage.getItem("hideBalance") === "true";
     setHidden(saved);
-
-    // read wallet balance only on client
-    const val = typeof window !== "undefined" ? window.__walletBalance ?? 20000 : 20000;
-    setBalance(val);
-
     setMounted(true);
   }, []);
 
@@ -28,6 +24,11 @@ export default function BalanceCard() {
     setHidden(next);
     localStorage.setItem("hideBalance", String(next));
   }
+
+  const balance = Number(wallet?.available_balance || 0).toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return (
     <div className="relative rounded-3xl p-6 bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl overflow-hidden">
@@ -39,9 +40,8 @@ export default function BalanceCard() {
       <div className="flex items-center gap-3 mt-2">
         <span className="text-lg font-semibold">₦</span>
 
-        {/* identical SSR + first client render */}
-        <span className="text-3xl font-extrabold tracking-tight">
-          {!mounted || hidden ? "****" : balance.toLocaleString()}
+        <span className="text-[24px] font-extrabold tracking-tight">
+          {!mounted || hidden ? "****" : balance}
         </span>
 
         <button
@@ -53,11 +53,17 @@ export default function BalanceCard() {
       </div>
 
       <div className="flex gap-4 mt-5">
-        <Link href="/dashboard/addfund" className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-1100 py-2 text-sm font-medium">
+        <Link
+          href="/dashboard/addfund"
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-1100 py-2 text-sm font-medium"
+        >
           <FaPlus /> Add Funds
         </Link>
 
-        <Link href="/dashboard/sendfund" className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-1100 py-2 text-sm font-medium">
+        <Link
+          href="/dashboard/sendfund"
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-1100 py-2 text-sm font-medium"
+        >
           <FiSend /> Send Funds
         </Link>
       </div>

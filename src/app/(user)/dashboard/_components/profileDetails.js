@@ -42,11 +42,11 @@ export default function ProfileDetails({ user }) {
         )}
 
         <div>
-          <div className="text-lg font-semibold">{user.name}</div>
-          <div className="text-silver-500">@{user.username}</div>
+          <div className="text-lg font-semibold truncate max-w-55">{user.name}</div>
+          <div className="text-silver-400">@{user.username}</div>
 
           <div className="text-green-400 text-sm flex items-center gap-1 mt-1">
-            <ShieldCheck size={14} /> {user.kyc}
+            <ShieldCheck size={14} /> {user.is_email_verified}
           </div>
         </div>
       </div>

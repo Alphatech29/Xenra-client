@@ -25,7 +25,7 @@ export default function AlertModal({
     },
     confirm: {
       icon: <HelpCircle className="w-12 h-12 text-blue-500" />,
-      button: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-400",
+      button: "bg-primary-600 hover:bg-primary-700 focus:ring-blue-400",
     },
   };
 

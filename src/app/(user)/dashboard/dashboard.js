@@ -6,26 +6,47 @@ import { HiGiftTop, HiMiniShoppingBag } from "react-icons/hi2";
 import { RiSimCardFill, RiBtcFill } from "react-icons/ri";
 import BalanceCard from "./_components/balanceCard";
 import TransactionsCard from "./_components/transactionsCard";
+import { useTransactionHistory } from "../../../hooks/useTransactionHistory";
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
 };
 
 const section = {
   hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } }
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: "easeOut" },
+  },
 };
 
-const fakeTransactions = [
-  { id: "1", name: "Wallet Funding", date: "Feb 10 • 10:32 AM", amount: 50000, type: "credit", status: "completed" },
-  { id: "2", name: "Airtime Purchase", date: "Feb 17 • 09:10 AM", amount: 2000, type: "debit", status: "completed" },
-  { id: "3", name: "Data Subscription", date: "Jan 20 • 07:42 PM", amount: 3500, type: "debit", status: "completed" },
-  { id: "4", name: "Giftcard Trade", date: "Apr 15 • 02:15 PM", amount: 120000, type: "credit", status: "completed" },
-  { id: "5", name: "Transfer to John", date: "Feb 28 • 06:21 PM", amount: 15000, type: "debit", status: "pending" },
-];
-
 export default function DashboardPage() {
+  const { transactions = [] } = useTransactionHistory();
+
+   const formattedTransactions = transactions
+    .slice(0, 6)
+    .map((tx) => ({
+      id: tx?.id,
+      name: (tx?.service_type?.toLowerCase() || tx?.description?.toLowerCase()) ?? "transaction",
+      date: tx?.created_at
+        ? new Date(tx.created_at).toLocaleString("en-NG", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : "",
+      amount: Number(tx?.total ?? tx?.amount ?? 0),
+      type: tx?.status_type === "credit" ? "credit" : "debit",
+      status: tx?.status ?? "pending",
+    }));
+
   return (
     <main className="min-h-screen pb-32 bg-linear-to-b from-primary-1200 via-primary-950 to-primary-1200 text-silver-100">
       <motion.div variants={container} initial="hidden" animate="show" className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -97,7 +118,7 @@ export default function DashboardPage() {
         <motion.div variants={section}>
           <TransactionsCard
             title="Recent Transactions"
-            transactions={fakeTransactions}
+            transactions={formattedTransactions}
           />
         </motion.div>
 

@@ -15,10 +15,12 @@ import {
 import { useLogout } from "../../../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import ProfileDetails from "../_components/profileDetails";
+import { useUser } from "../../../../hooks/useUser";
 
 export default function FintechProfile() {
   const router = useRouter();
   const { logout, loading } = useLogout();
+  const { user: userData } = useUser();
 
   const handleLogout = async () => {
     const res = await logout();
@@ -29,26 +31,7 @@ export default function FintechProfile() {
     }
   };
 
-  const user = {
-    id: "PSQ-88472921",
-    username: "gabriel_dev",
-    name: "Gabriel Itodo",
-    avatar: "",
-    email: "gabriel@example.com",
-    phone: "+234 812 345 6789",
-    country: "Nigeria",
-    bank: "Paysparq Bank",
-    kyc: "Verified",
-    accountNumber: "3029 8847 2291",
-    tier: "Premium",
-  };
-
   /* ---------------- Avatar Logic ---------------- */
-
-  const hasAvatar =
-    user.avatar &&
-    typeof user.avatar === "string" &&
-    (user.avatar.startsWith("http") || user.avatar.startsWith("/"));
 
   const getInitials = (name = "") => {
     if (!name) return "?";
@@ -57,6 +40,26 @@ export default function FintechProfile() {
     if (parts.length === 1) return parts[0][0]?.toUpperCase();
 
     return ((parts[0][0] || "") + (parts[1][0] || "")).toUpperCase();
+  };
+
+  const avatar = userData?.avatar || "";
+  const hasAvatar =
+    avatar &&
+    typeof avatar === "string" &&
+    (avatar.startsWith("http") || avatar.startsWith("/"));
+
+  /* ---------------- User Object ---------------- */
+
+  const user = {
+    id: "PSQ-88472921",
+    username: userData?.username || "",
+    name: userData?.full_name || "",
+    avatar: hasAvatar ? avatar : "",
+    initials: !hasAvatar ? getInitials(userData?.full_name || "") : "",
+    email: userData?.email || "",
+    phone: userData?.phone_number || "",
+    country: userData?.country || "Not set",
+    is_email_verified: userData?.is_email_verified === 1 ? "Verified" : "Not Verified",
   };
 
   /* ---------------- UI Components ---------------- */
@@ -78,7 +81,10 @@ export default function FintechProfile() {
         <Icon size={18} className="text-primary-400" />
         <span>{title}</span>
       </div>
-      <button  onClick={onClick} className="text-sm text-yellow-500 hover:text-primary-300 font-medium">
+      <button
+        onClick={onClick}
+        className="text-sm text-yellow-500 hover:text-primary-300 font-medium"
+      >
         {action}
       </button>
     </div>
@@ -89,31 +95,60 @@ export default function FintechProfile() {
       <div className="max-w-6xl mx-auto space-y-6">
 
         {/* PROFILE */}
-        <ProfileDetails user={user}/>
+        <ProfileDetails user={user} />
 
         {/* SECURITY */}
         <Card delay={0.05}>
           <h2 className="text-xl font-semibold">Security</h2>
           <div className="space-y-4">
-            <ActionRow icon={Lock} title="Transaction PIN" action="Change"   onClick={() => router.push("/dashboard/transactionPin")}/>
-            <ActionRow icon={KeyRound} title="Change Password" action="Update" />
-            <ActionRow icon={Smartphone} title="2-Factor Authentication" action="Enable" />
-            <ActionRow icon={Eye} title="Privacy Settings" action="Configure" />
+            <ActionRow
+              icon={Lock}
+              title="Transaction PIN"
+              action="Change"
+              onClick={() => router.push("/dashboard/transactionPin")}
+            />
+            <ActionRow
+              icon={KeyRound}
+              title="Change Password"
+              action="Update"
+            />
+            <ActionRow
+              icon={Smartphone}
+              title="2-Factor Authentication"
+              action="Enable"
+            />
+            <ActionRow
+              icon={Eye}
+              title="Privacy Settings"
+              action="Configure"
+            />
           </div>
         </Card>
 
         {/* PREFERENCES */}
         <Card delay={0.1}>
           <h2 className="text-xl font-semibold">Preferences</h2>
-          <ActionRow icon={Bell} title="Notifications" action="Manage" />
+          <ActionRow
+            icon={Bell}
+            title="Notifications"
+            action="Manage"
+          />
         </Card>
 
         {/* HELP */}
         <Card delay={0.15}>
           <h2 className="text-xl font-semibold">Help & Support</h2>
           <div className="space-y-4">
-            <ActionRow icon={LifeBuoy} title="Help Center" action="Open" />
-            <ActionRow icon={Mail} title="Contact Support" action="Send Message" />
+            <ActionRow
+              icon={LifeBuoy}
+              title="Help Center"
+              action="Open"
+            />
+            <ActionRow
+              icon={Mail}
+              title="Contact Support"
+              action="Send Message"
+            />
           </div>
         </Card>
 

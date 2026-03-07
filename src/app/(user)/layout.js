@@ -1,7 +1,10 @@
+"use client";
+
 import Header from "./dashboard/_components/layout/userheader";
 import Footer from "./dashboard/_components/layout/userfooter";
 
 export default function PrivateLayout({ children }) {
+
   return (
     <>
       {/* DESKTOP BLOCK SCREEN */}
@@ -12,7 +15,7 @@ export default function PrivateLayout({ children }) {
 
         {/* Card */}
         <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-12 max-w-2xl text-center shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
-          {/* Device mockup */}
+          
           <div className="flex justify-center mb-8">
             <div className="relative w-40 h-72 rounded-[2.5rem] border border-white/20 bg-linear-to-b from-primary-800 to-primary-950 shadow-2xl">
               <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-5 bg-black/70 rounded-full" />
@@ -22,7 +25,9 @@ export default function PrivateLayout({ children }) {
             </div>
           </div>
 
-          <h1 className="text-3xl font-semibold tracking-tight">Mobile Experience Only</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Mobile Experience Only
+          </h1>
 
           <p className="mt-4 text-white/70 leading-relaxed max-w-md mx-auto">
             This platform is optimized for mobile interaction to ensure speed,
@@ -35,23 +40,24 @@ export default function PrivateLayout({ children }) {
             <p>Open this link on your mobile device</p>
           </div>
 
-
         </div>
       </main>
 
       {/* MOBILE APP */}
       <main className="block lg:hidden min-h-screen bg-linear-to-b from-primary-1200 via-primary-950 to-primary-1200">
+        
         <header className="fixed top-0 w-full z-50">
           <Header />
         </header>
 
-        <div className="min-h-screen overflow-y-auto from-primary-1200 via-primary-950 to-primary-1200 mt-14 ">
+        <div className="min-h-screen overflow-y-auto mt-14">
           {children}
         </div>
 
         <footer className="fixed bottom-0 w-full z-50">
           <Footer />
         </footer>
+
       </main>
     </>
   );

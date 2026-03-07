@@ -1,20 +1,27 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { createTransactionPin } from "../lib/transactionPin";
+import { createTransactionPin, changeTransactionPin } from "../lib/transactionPin";
 
 export const useTransactionPin = (mode = "create") => {
 
   const [pin, setPin] = useState("");
   const [step, setStep] = useState(mode === "change" ? "current" : "create");
   const [firstPin, setFirstPin] = useState("");
+  const [currentPin, setCurrentPin] = useState("");
   const [error, setError] = useState("");
 
   const inputRef = useRef(null);
 
+  /* focus input */
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  /* update step when mode changes */
+  useEffect(() => {
+    setStep(mode === "change" ? "current" : "create");
+  }, [mode]);
 
   const resetPin = () => {
     setPin("");
@@ -24,6 +31,7 @@ export const useTransactionPin = (mode = "create") => {
   const resetAll = () => {
     setPin("");
     setFirstPin("");
+    setCurrentPin("");
     setError("");
     setStep(mode === "change" ? "current" : "create");
   };
@@ -46,8 +54,13 @@ export const useTransactionPin = (mode = "create") => {
   };
 
   const handleChange = (e) => {
+
     const value = e.target.value.replace(/\D/g, "");
-    if (value.length > 4) return;
+
+    if (value.length > 4) {
+      return;
+    }
+
     setPin(value);
   };
 
@@ -60,9 +73,10 @@ export const useTransactionPin = (mode = "create") => {
 
     setError("");
 
-    /* CREATE FLOW */
+    /* ---------------- CREATE FLOW ---------------- */
 
     if (step === "create") {
+
       setFirstPin(pin);
       setStep("confirm");
       resetPin();
@@ -79,10 +93,7 @@ export const useTransactionPin = (mode = "create") => {
 
       try {
 
-        // FIX: send valid JSON
-        await createTransactionPin({ pin });
-
-        console.log("PIN created successfully");
+        const response = await createTransactionPin({ pin });
 
         resetAll();
         return "success";
@@ -94,16 +105,18 @@ export const useTransactionPin = (mode = "create") => {
       }
     }
 
-    /* CHANGE FLOW */
+    /* ---------------- CHANGE FLOW ---------------- */
 
     if (step === "current") {
-      console.log("Current PIN:", pin);
+
+      setCurrentPin(pin);
       setStep("new");
       resetPin();
       return;
     }
 
     if (step === "new") {
+
       setFirstPin(pin);
       setStep("confirmNew");
       resetPin();
@@ -118,10 +131,21 @@ export const useTransactionPin = (mode = "create") => {
         return;
       }
 
-      console.log("New PIN:", pin);
+      try {
 
-      resetAll();
-      return "success";
+        const response = await changeTransactionPin({
+          oldPin: currentPin,
+          newPin: pin,
+        });
+
+        resetAll();
+        return "success";
+
+      } catch (err) {
+
+        setError(err.message || "Failed to change PIN");
+        resetPin();
+      }
     }
   };
 

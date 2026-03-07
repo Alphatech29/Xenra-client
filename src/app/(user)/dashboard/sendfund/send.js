@@ -40,7 +40,9 @@ const BankAvatar = ({ name }) => {
     colors.length;
 
   return (
-    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${colors[index]}`}>
+    <div
+      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${colors[index]}`}
+    >
       {initials}
     </div>
   );
@@ -68,7 +70,9 @@ export default function SendFundPage() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("recent_beneficiaries") || "[]");
+      const saved = JSON.parse(
+        localStorage.getItem("recent_beneficiaries") || "[]",
+      );
       setRecent(saved);
     } catch {
       setRecent([]);
@@ -83,36 +87,36 @@ export default function SendFundPage() {
     bankForm.account_name === accountName;
 
   /* ---------------- SAVE + NAVIGATE ---------------- */
- const handleProceed = () => {
-  if (!isVerified) return;
+  const handleProceed = () => {
+    if (!isVerified) return;
 
-  const payload = {
-    account_number: bankForm.account_number,
-    bank_code: bankForm.bank_code,
-    bank_name: bankForm.bank_name,
-    account_name: bankForm.account_name,
+    const payload = {
+      account_number: bankForm.account_number,
+      bank_code: bankForm.bank_code,
+      bank_name: bankForm.bank_name,
+      account_name: bankForm.account_name,
+    };
+
+    // save recent
+    setRecent((prev) => {
+      const filtered = prev.filter(
+        (b) =>
+          !(
+            b.account_number === payload.account_number &&
+            b.bank_code === payload.bank_code
+          ),
+      );
+
+      const updated = [payload, ...filtered].slice(0, 10);
+      localStorage.setItem("recent_beneficiaries", JSON.stringify(updated));
+      return updated;
+    });
+
+    // 🔥 pass data through navigation state (NOT URL)
+    sessionStorage.setItem("transfer_recipient", JSON.stringify(payload));
+
+    router.push("/dashboard/sendfund/proceed");
   };
-
-  // save recent
-  setRecent((prev) => {
-    const filtered = prev.filter(
-      (b) =>
-        !(
-          b.account_number === payload.account_number &&
-          b.bank_code === payload.bank_code
-        )
-    );
-
-    const updated = [payload, ...filtered].slice(0, 10);
-    localStorage.setItem("recent_beneficiaries", JSON.stringify(updated));
-    return updated;
-  });
-
-  // 🔥 pass data through navigation state (NOT URL)
-  sessionStorage.setItem("transfer_recipient", JSON.stringify(payload));
-
-  router.push("/dashboard/sendfund/proceed");
-};
   const selectRecent = (b) => {
     setBankForm({
       account_number: b.account_number,
@@ -127,7 +131,7 @@ export default function SendFundPage() {
     if (!banks) return [];
     if (!bankSearch) return banks;
     return banks.filter((b) =>
-      b.name.toLowerCase().includes(bankSearch.toLowerCase())
+      b.name.toLowerCase().includes(bankSearch.toLowerCase()),
     );
   }, [banks, bankSearch]);
 
@@ -162,7 +166,7 @@ export default function SendFundPage() {
   }, [accountName]);
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-md pb-32 mx-auto px-4 py-6 space-y-6">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-white">Send Money</h1>
         <p className="text-sm text-gray-400">Enter recipient account details</p>
@@ -240,46 +244,53 @@ export default function SendFundPage() {
 
       {/* RECENT BENEFICIARIES */}
       <div className="space-y-3">
-  <div className="flex items-center justify-between">
-    <h2 className="text-sm font-semibold text-white">Recent</h2>
-    <span className="text-xs text-silver-400">
-      {(recent ?? []).length} saved
-    </span>
-  </div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">Recent</h2>
+          <span className="text-xs text-silver-400">
+            {(recent ?? []).length} saved
+          </span>
+        </div>
 
-  {(recent ?? []).length === 0 ? (
-    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-center h-40 flex flex-col items-center justify-center gap-2">
-      <p className="text-sm text-silver-400">
-        No recent beneficiaries yet
-      </p>
-      <p className="text-xs text-silver-500 mt-1">
-        Accounts you send money to will appear here
-      </p>
-    </div>
-  ) : (
-    <div className="flex flex-col gap-3 justify-start items-start bg-white/5 rounded-xl p-2 min-h-60">
-      {(recent ?? []).map((b) => (
-        <button
-          key={`${b.account_number}-${b.bank_name}`}
-          onClick={() => selectRecent(b)}
-          className="w-full border-b border-white/10 p-3 transition-transform"
-        >
-          <div className="flex items-center gap-3">
-            <BankAvatar name={b.bank_name} />
-            <div className="flex flex-col text-left">
-              <span className="text-white text-sm font-medium line-clamp-2 max-w-48">
-                {b.account_name}
-              </span>
-              <span className="text-xs text-gray-400">
-                {b.bank_name} - {b.account_number}
-              </span>
-            </div>
+        {(recent ?? []).length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-center h-40 flex flex-col items-center justify-center gap-2">
+            <p className="text-sm text-silver-400">
+              No recent beneficiaries yet
+            </p>
+            <p className="text-xs text-silver-500 mt-1">
+              Accounts you send money to will appear here
+            </p>
           </div>
-        </button>
-      ))}
-    </div>
-  )}
-</div>
+        ) : (
+          <div className="flex flex-col gap-3 justify-start items-start bg-white/5 rounded-xl p-2 min-h-60">
+            {(recent ?? []).map((b) => (
+              <button
+                key={`${b.account_number}-${b.bank_name}`}
+                onClick={() => selectRecent(b)}
+                className="w-full border-b border-white/10 p-3 transition-transform"
+              >
+                <div className="flex items-center gap-3">
+                  <BankAvatar name={b.bank_name} />
+                  <div className="flex flex-col text-left">
+                    <span className="text-white text-sm font-medium truncate max-w-62.5">
+                      {b.account_name
+                        ?.toLowerCase()
+                        .split(" ")
+                        .map(
+                          (word) =>
+                            word.charAt(0).toUpperCase() + word.slice(1),
+                        )
+                        .join(" ")}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {b.bank_name} - {b.account_number}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <ModalBottomSheet
         open={bankSheetOpen}
