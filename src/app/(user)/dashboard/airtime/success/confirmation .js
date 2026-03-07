@@ -66,13 +66,13 @@ Ref: ${ref}`;
   };
 
   return (
-    <div className="min-h-screen pb-32 bg-[#000b3a] text-white flex justify-center items-center px-4 py-5">
+    <div className="min-h-screen pb-32 pt-20 bg-[#000b3a] text-white flex justify-center items-center px-4 py-5">
 
       <div className="w-full max-w-md space-y-4">
 
         {/* SUCCESS ANIMATION */}
         <div className="flex flex-col items-center gap-3">
-          <div className="relative w-28 h-28 flex items-center justify-center">
+          <div className="relative w-20 h-20 flex items-center justify-center">
             <motion.svg viewBox="0 0 100 100" className="w-28 h-28">
               <motion.circle
                 cx="50"
@@ -99,7 +99,7 @@ Ref: ${ref}`;
             </motion.svg>
           </div>
 
-          <h1 className="text-2xl font-semibold text-blue-400">
+          <h1 className="text-xl font-semibold text-blue-400">
             Payment Successful
           </h1>
           <p className="text-slate-400 text-sm">

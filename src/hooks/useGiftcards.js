@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { getGiftcards, tradeCard } from "../lib/sellGiftcard";
+import { useWebSettings } from "../hooks/useWebSettings";
 
 export const useSellGiftCard = () => {
+
+  /* ---------------- Web Settings ---------------- */
+  const { settings } = useWebSettings();
 
   /* ---------------- Giftcards ---------------- */
   const [giftcards, setGiftcards] = useState([]);
@@ -55,8 +59,14 @@ export const useSellGiftCard = () => {
     return amt * rate;
   }, [amount, selectedSub]);
 
-  const fee = useMemo(() => Math.round(receive * 0.015), [receive]);
+  /* ---------------- Fee (percentage from settings) ---------------- */
+  const fee = useMemo(() => {
+    const feePercent = Number(settings?.gift_card_fee || 0);
+    const feeRate = feePercent / 100;
+    return Math.round(receive * feeRate);
+  }, [receive, settings?.gift_card_fee]);
 
+  /* ---------------- Final Amount ---------------- */
   const finalAmount = useMemo(() => {
     return Math.max(receive - fee, 0);
   }, [receive, fee]);
@@ -74,7 +84,7 @@ export const useSellGiftCard = () => {
     setPreview(imageUrl);
   };
 
-  /* Cleanup preview memory */
+  /* ---------------- Cleanup Preview Memory ---------------- */
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
@@ -94,67 +104,67 @@ export const useSellGiftCard = () => {
   };
 
   /* ---------------- Submit ---------------- */
-const handleSubmit = async (e) => {
-  e?.preventDefault();
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
 
-  if (!category) {
-    alert("Select gift card brand");
-    throw new Error("Brand required");
-  }
-
-  if (!subCategory) {
-    alert("Select sub-category");
-    throw new Error("Sub-category required");
-  }
-
-  if (!amount) {
-    alert("Enter card amount");
-    throw new Error("Amount required");
-  }
-
-  if (mode === "physical" && !image) {
-    alert("Upload card image");
-    throw new Error("Image required");
-  }
-
-  if (mode === "ecode" && !code.trim()) {
-    alert("Enter gift card code");
-    throw new Error("Code required");
-  }
-
-  if (!agree) {
-    alert("Accept terms");
-    throw new Error("Terms not accepted");
-  }
-
-  try {
-    const formData = new FormData();
-
-    formData.append("mode", mode);
-    formData.append("brand_id", category);
-    formData.append("sub_category_id", subCategory);
-    formData.append("amount", amount);
-
-    if (mode === "ecode") {
-      formData.append("code", code);
+    if (!category) {
+      alert("Select gift card brand");
+      throw new Error("Brand required");
     }
 
-    if (mode === "physical" && image) {
-      formData.append("image", image);
+    if (!subCategory) {
+      alert("Select sub-category");
+      throw new Error("Sub-category required");
     }
 
-    const result = await tradeCard(formData);
+    if (!amount) {
+      alert("Enter card amount");
+      throw new Error("Amount required");
+    }
 
-    return {
-      success: true,
-      message: "Trade submitted",
-      data: result
-    };
+    if (mode === "physical" && !image) {
+      alert("Upload card image");
+      throw new Error("Image required");
+    }
 
-  } catch (error) {
-    throw new Error(error?.message || "Trade failed");
-  }
-};
+    if (mode === "ecode" && !code.trim()) {
+      alert("Enter gift card code");
+      throw new Error("Code required");
+    }
+
+    if (!agree) {
+      alert("Accept terms");
+      throw new Error("Terms not accepted");
+    }
+
+    try {
+      const formData = new FormData();
+
+      formData.append("mode", mode);
+      formData.append("brand_id", category);
+      formData.append("sub_category_id", subCategory);
+      formData.append("amount", amount);
+
+      if (mode === "ecode") {
+        formData.append("code", code);
+      }
+
+      if (mode === "physical" && image) {
+        formData.append("image", image);
+      }
+
+      const result = await tradeCard(formData);
+
+      return {
+        success: true,
+        message: "Trade submitted",
+        data: result
+      };
+
+    } catch (error) {
+      throw new Error(error?.message || "Trade failed");
+    }
+  };
 
   return {
     giftcards,
