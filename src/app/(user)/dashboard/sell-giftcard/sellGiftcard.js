@@ -159,6 +159,7 @@ export default function SellGiftCardForm() {
 
             <input
               type="number"
+               inputMode="numeric"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Card Amount ($)"

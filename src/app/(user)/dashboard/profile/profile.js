@@ -78,8 +78,8 @@ export default function FintechProfile() {
   const ActionRow = ({ icon: Icon, title, action, onClick }) => (
     <div className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition rounded-2xl p-4">
       <div className="flex items-center gap-3">
-        <Icon size={18} className="text-primary-400" />
-        <span>{title}</span>
+        <Icon size={18} className="text-primary-400 text-sm" />
+        <span className="text-sm">{title}</span>
       </div>
       <button
         onClick={onClick}
@@ -99,7 +99,7 @@ export default function FintechProfile() {
 
         {/* SECURITY */}
         <Card delay={0.05}>
-          <h2 className="text-xl font-semibold">Security</h2>
+          <h2 className="text-base font-semibold">Security</h2>
           <div className="space-y-4">
             <ActionRow
               icon={Lock}
@@ -127,7 +127,7 @@ export default function FintechProfile() {
 
         {/* PREFERENCES */}
         <Card delay={0.1}>
-          <h2 className="text-xl font-semibold">Preferences</h2>
+          <h2 className="text-base font-semibold">Preferences</h2>
           <ActionRow
             icon={Bell}
             title="Notifications"
@@ -137,7 +137,7 @@ export default function FintechProfile() {
 
         {/* HELP */}
         <Card delay={0.15}>
-          <h2 className="text-xl font-semibold">Help & Support</h2>
+          <h2 className="text-base font-semibold">Help & Support</h2>
           <div className="space-y-4">
             <ActionRow
               icon={LifeBuoy}
@@ -158,7 +158,7 @@ export default function FintechProfile() {
             whileTap={{ scale: 0.97 }}
             onClick={handleLogout}
             disabled={loading}
-            className="flex items-center justify-center gap-2 font-semibold text-red-400 hover:text-red-300 transition"
+            className="flex items-center justify-center text-sm gap-2 font-semibold text-red-400 hover:text-red-300 transition"
           >
             <LogOut size={18} />
             {loading ? "Logging out..." : "Log Out"}

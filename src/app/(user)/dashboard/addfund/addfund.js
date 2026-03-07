@@ -125,7 +125,7 @@ export default function AddFundPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-400 text-sm">Account Number</p>
-                  <h3 className="text-2xl font-bold tracking-widest">
+                  <h3 className="text-base font-bold tracking-widest">
                     {BANK.account_number}
                   </h3>
                 </div>
@@ -153,7 +153,7 @@ export default function AddFundPage() {
 
                 <div>
                   <p className="text-gray-400">Account Name</p>
-                  <p className="font-semibold">{BANK.account_name}</p>
+                  <p className="font-semibold text-sm">{BANK.account_name}</p>
                 </div>
               </div>
             </div>
@@ -203,14 +203,14 @@ export default function AddFundPage() {
             {/* QR + ADDRESS */}
             <div className="rounded-3xl bg-primary-900/20 border border-white/10 p-4 space-y-5">
 
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-base font-semibold">
                 Send {selectedAsset.name} ({selectedNetwork.label})
               </h3>
 
               <div className="bg-white p-4 rounded-2xl w-fit mx-auto">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${selectedNetwork.address}`}
-                  className="w-44 h-44"
+                  className="w-36 h-36"
                   alt="QR Code"
                 />
               </div>
@@ -223,7 +223,7 @@ export default function AddFundPage() {
                 onClick={() =>
                   copy(selectedNetwork.address, "addr", "Wallet address")
                 }
-                className="w-full py-3 rounded-xl bg-primary-400 hover:bg-primary-300 font-medium flex justify-center gap-2"
+                className="w-full py-3 text-sm rounded-xl bg-primary-400 hover:bg-primary-300 font-medium flex justify-center gap-2"
               >
                 {copied === "addr" ? (
                   <CheckCircle size={18} />

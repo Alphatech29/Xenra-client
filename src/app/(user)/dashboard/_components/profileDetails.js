@@ -24,7 +24,7 @@ export default function ProfileDetails({ user }) {
       animate={{ opacity: 1, y: 0 }}
       className="backdrop-blur-xl bg-white/5 rounded-3xl p-5 border border-primary-300/10 space-y-4"
     >
-      <h2 className="text-xl font-semibold flex items-center gap-2">
+      <h2 className="text-base font-semibold flex items-center gap-2">
         <ShieldCheck size={20} /> Profile Details
       </h2>
 
@@ -33,19 +33,19 @@ export default function ProfileDetails({ user }) {
           <img
             src={user.avatar}
             alt="avatar"
-            className="w-20 h-20 rounded-full border-2 border-primary-500 object-cover shadow-lg"
+            className="w-16 h-16 rounded-full border-2 border-primary-500 object-cover shadow-lg"
           />
         ) : (
-          <div className="w-20 h-20 rounded-full border-2 border-primary-300/10 bg-primary-700/15 flex items-center justify-center text-2xl font-bold shadow-lg">
+          <div className="w-16 h-16 rounded-full border-2 border-primary-300/10 bg-primary-700/15 flex items-center justify-center text-2xl font-bold shadow-lg">
             {getInitials(user.name)}
           </div>
         )}
 
         <div>
-          <div className="text-lg font-semibold truncate max-w-55">{user.name}</div>
-          <div className="text-silver-400">@{user.username}</div>
+          <div className="text-[14px] font-semibold truncate max-w-55">{user.name}</div>
+          <div className="text-silver-400 text-sm">@{user.username}</div>
 
-          <div className="text-green-400 text-sm flex items-center gap-1 mt-1">
+          <div className="text-green-400 text-xs flex items-center gap-1 mt-1">
             <ShieldCheck size={14} /> {user.is_email_verified}
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function ProfileDetails({ user }) {
         ].map(([label, value], i) => (
           <div key={i}>
             <div className="text-sm text-silver-400">{label}</div>
-            <div className="font-medium tracking-wide">{value}</div>
+            <div className="font-medium tracking-wide text-[14px]">{value}</div>
           </div>
         ))}
 

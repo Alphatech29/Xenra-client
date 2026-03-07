@@ -39,7 +39,7 @@ export default function Footer() {
   };
 
   return (
-    <div className="fixed bottom-5 left-0 right-0 z-50 flex justify-center px-4">
+    <div className="fixed bottom-3 left-0 right-0 z-50 flex justify-center px-4">
       <footer className="relative w-full max-w-md backdrop-blur-2xl bg-primary-1100/60 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.35)] rounded-3xl px-2 py-2 flex items-center justify-between">
 
         {menus.map((menu) => {

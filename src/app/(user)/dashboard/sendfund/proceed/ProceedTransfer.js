@@ -23,12 +23,12 @@ export default function ProceedTransfer() {
   const router = useRouter();
 
   const {
-     beneficiary,
-  note,
-  setNote,
-  pin,
-  setPin,
-  inputs,
+    beneficiary,
+    note,
+    setNote,
+    pin,
+    setPin,
+    inputs,
 
     openPreview,
     askPin,
@@ -140,19 +140,19 @@ export default function ProceedTransfer() {
           Transaction Summary
         </h3>
 
-        <div className="flex justify-between text-gray-400">
+        <div className="flex text-sm justify-between text-gray-400">
           <span>Amount</span>
           <span className="text-white font-medium">
             ₦{format(numericAmount)}
           </span>
         </div>
 
-        <div className="flex justify-between text-gray-400">
+        <div className="flex text-sm justify-between text-gray-400">
           <span>Transfer fee</span>
           <span>₦{format(fee)}</span>
         </div>
 
-        <div className="pt-3 border-t border-white/10 flex justify-between text-lg font-semibold text-white">
+        <div className="pt-3 border-t border-white/10 flex justify-between text-base font-semibold text-white">
           <span>Total Debit</span>
           <span>₦{format(total)}</span>
         </div>
@@ -183,14 +183,14 @@ export default function ProceedTransfer() {
 
       {/* MODAL */}
       <ModalBottomSheet
-         open={openPreview}
-  onClose={() => {
-    if (processing || success) return;
+        open={openPreview}
+        onClose={() => {
+          if (processing || success) return;
 
-    setPin(["", "", "", ""]); // reset PIN
-    setAskPin(false);
-    setOpenPreview(false);
-  }}
+          setPin(["", "", "", ""]);
+          setAskPin(false);
+          setOpenPreview(false);
+        }}
       >
         {/* ERROR */}
         {error && !processing && !success && (
@@ -248,33 +248,33 @@ export default function ProceedTransfer() {
         {/* CONFIRM */}
         {!processing && !askPin && !success && (
           <div className="p-5 space-y-4">
-            <h3 className="text-white text-lg font-semibold text-center">
+            <h3 className="text-white text-base font-semibold text-center">
               Confirm Transfer
             </h3>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex text-sm justify-between text-gray-400">
               <span>Recipient</span>
               <span className="text-white">{beneficiary.account_name}</span>
             </div>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex text-sm justify-between text-gray-400">
               <span>Bank</span>
               <span className="text-white">{beneficiary.bank_name}</span>
             </div>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex text-sm justify-between text-gray-400">
               <span>Amount</span>
               <span className="text-white">₦{format(numericAmount)}</span>
             </div>
 
-            <div className="flex justify-between text-gray-400">
+            <div className="flex text-sm justify-between text-gray-400">
               <span>Total Debit</span>
               <span className="text-white">₦{format(total)}</span>
             </div>
 
             <button
               onClick={() => setAskPin(true)}
-              className="w-full py-3 rounded-xl bg-primary-500 text-white"
+              className="w-full py-3 rounded-xl text-sm bg-primary-500 text-white"
             >
               Confirm Transfer
             </button>
@@ -284,7 +284,7 @@ export default function ProceedTransfer() {
         {/* PIN */}
         {!processing && askPin && !success && (
           <div className="p-6 space-y-6 text-center">
-            <h3 className="text-white text-lg font-semibold">
+            <h3 className="text-white text-base font-semibold">
               Enter Transaction PIN
             </h3>
 
@@ -294,6 +294,7 @@ export default function ProceedTransfer() {
                   key={index}
                   ref={(el) => (inputs.current[index] = el)}
                   type="password"
+                  inputMode="numeric"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handlePinChange(e.target.value, index)}
@@ -306,7 +307,7 @@ export default function ProceedTransfer() {
             <button
               disabled={pin.join("").length < 4 || processing}
               onClick={handleAuthorize}
-              className="w-full py-3 rounded-xl bg-primary-500 text-white disabled:opacity-40"
+              className="w-full py-3 text-sm rounded-xl bg-primary-500 text-white disabled:opacity-40"
             >
               Authorize Transfer
             </button>
