@@ -145,7 +145,7 @@ export default function GiftCardList({ onSelect }) {
           Choose Gift Card
         </h2>
 
-        <p className="mt-1 text-gray-500">
+        <p className="mt-1 text-silver-300">
           Select the brand you want to purchase
         </p>
       </header>

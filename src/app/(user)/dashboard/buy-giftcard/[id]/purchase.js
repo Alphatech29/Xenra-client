@@ -92,16 +92,13 @@ export default function GiftcardPurchasePage() {
   const isRange = product?.denominationType === "RANGE";
 
   const denominations = product?.fixedRecipientDenominations || [];
-  const denominationMap =
-    product?.fixedRecipientToSenderDenominationsMap || {};
+  const denominationMap = product?.fixedRecipientToSenderDenominationsMap || {};
 
   const amount = isFixed
-    ? selectedAmount ?? denominations[0] ?? 0
+    ? (selectedAmount ?? denominations[0] ?? 0)
     : Number(customAmount || 0);
 
-  const senderPrice = isFixed
-    ? denominationMap?.[amount] ?? amount
-    : amount;
+  const senderPrice = isFixed ? (denominationMap?.[amount] ?? amount) : amount;
 
   const feeFixed = Number(product?.senderFee ?? 0);
 
@@ -138,7 +135,7 @@ export default function GiftcardPurchasePage() {
 
     if (invalidRange) {
       setErrorMessage(
-        `Amount must be between ${formatMoney(min)} and ${formatMoney(max)}`
+        `Amount must be between ${formatMoney(min)} and ${formatMoney(max)}`,
       );
       setErrorOpen(true);
       return;
@@ -179,11 +176,9 @@ export default function GiftcardPurchasePage() {
   return (
     <>
       <div className="max-w-xl mx-auto p-3 pb-32 space-y-5">
-
         {/* Header */}
 
         <div className="flex items-center justify-between mb-6">
-
           <button
             onClick={() => {
               if (window.history.length > 1) router.back();
@@ -194,55 +189,38 @@ export default function GiftcardPurchasePage() {
             <ArrowLeft size={20} />
           </button>
 
-          <h2 className="text-xl font-bold">Purchase</h2>
+          <h2 className="text-base font-bold">Purchase</h2>
 
           <div className="w-8" />
-
         </div>
 
         {/* Product Card */}
 
         <div className="flex items-center gap-4 bg-white/5 rounded-2xl p-4">
-
           <div className="relative w-16 h-16">
-
             <SafeImage
               src={product?.brandLogoUrl}
               alt={product?.productName}
               fill
               className="object-contain"
             />
-
           </div>
 
           <div>
+            <h1 className="text-lg font-bold">{product?.productName}</h1>
 
-            <h1 className="text-xl font-bold">
-              {product?.productName}
-            </h1>
-
-            <p className="text-sm text-gray-400">
-              {product?.countryName}
-            </p>
-
+            <p className="text-sm text-gray-400">{product?.countryName}</p>
           </div>
-
         </div>
-
-
 
         {/* Amount */}
 
         <div className="space-y-2">
-
           <label className="text-sm font-semibold">Amount</label>
 
           {isFixed && (
-
-            <div className="grid grid-cols-3 gap-2">
-
+            <div className="grid grid-cols-3 text-sm gap-2">
               {denominations.map((value) => (
-
                 <button
                   key={value}
                   onClick={() => setSelectedAmount(value)}
@@ -254,23 +232,19 @@ export default function GiftcardPurchasePage() {
                 >
                   {formatMoney(value)}
                 </button>
-
               ))}
-
             </div>
-
           )}
 
           {isRange && (
-
             <>
               <input
                 type="number"
                 value={customAmount}
                 min={min}
                 max={max}
+                placeholder={`Min ${formatMoney(min)} - Max ${formatMoney(max)}`}
                 onChange={(e) => {
-
                   const value = Number(e.target.value);
 
                   setCustomAmount(value);
@@ -282,25 +256,24 @@ export default function GiftcardPurchasePage() {
                   } else {
                     setAmountError("");
                   }
-
                 }}
-                className="w-full p-3 rounded-xl bg-white/5 border border-white/10"
+                className="w-full p-3 rounded-xl bg-white/5 border border-white/10 placeholder:text-gray-400 placeholder:text-sm"
               />
+
+              <p className="text-xs text-gray-400">
+                Min: {formatMoney(min)} • Max: {formatMoney(max)}
+              </p>
 
               {amountError && (
                 <p className="text-xs text-red-400">{amountError}</p>
               )}
-
             </>
-
           )}
-
         </div>
 
         {/* Quantity */}
 
         <div className="flex items-center gap-3">
-
           <button
             onClick={() => setQty(Math.max(1, qty - 1))}
             className="w-10 h-10 rounded-lg bg-white/10"
@@ -308,9 +281,7 @@ export default function GiftcardPurchasePage() {
             −
           </button>
 
-          <span className="text-lg font-semibold w-10 text-center">
-            {qty}
-          </span>
+          <span className="text-lg font-semibold w-10 text-center">{qty}</span>
 
           <button
             onClick={() => setQty(Math.min(10, qty + 1))}
@@ -318,7 +289,6 @@ export default function GiftcardPurchasePage() {
           >
             +
           </button>
-
         </div>
 
         {/* Email */}
@@ -328,13 +298,12 @@ export default function GiftcardPurchasePage() {
           placeholder="Recipient Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 rounded-xl bg-white/5 border border-white/10"
+          className="w-full p-3 rounded-xl text-sm bg-white/5 border border-white/10"
         />
 
         {/* Price Breakdown */}
 
-        <div className="bg-white/5 rounded-2xl p-4 space-y-2">
-
+        <div className="bg-white/5 rounded-2xl p-4 text-sm space-y-2">
           <div className="flex justify-between">
             <span>Price</span>
             <span>{formatMoney(senderPrice)}</span>
@@ -346,19 +315,16 @@ export default function GiftcardPurchasePage() {
           </div>
 
           {totalFee > 0 && (
-
             <div className="flex justify-between">
               <span>Processing Fee</span>
               <span>{formatMoney(totalFee)}</span>
             </div>
-
           )}
 
-          <div className="flex justify-between font-bold text-lg border-t pt-2">
+          <div className="flex justify-between font-bold text-base border-t pt-2">
             <span>Total</span>
             <span>{formatMoney(total)}</span>
           </div>
-
         </div>
 
         {/* Buy Button */}
@@ -366,59 +332,44 @@ export default function GiftcardPurchasePage() {
         <button
           onClick={handleBuy}
           disabled={invalidRange}
-          className="w-full py-3 rounded-2xl bg-primary-500 text-white disabled:opacity-50"
+          className="w-full py-2 rounded-2xl bg-primary-500 text-white disabled:opacity-50"
         >
           Buy Now
         </button>
 
         <div>
-                 {/* Redeem Instructions */}
+          {/* Redeem Instructions */}
 
-        {(product?.redeemInstructionConcise ||
-          product?.redeemInstructionVerbose) && (
+          {(product?.redeemInstructionConcise ||
+            product?.redeemInstructionVerbose) && (
+            <div className="bg-white/5 rounded-2xl p-5 space-y-4">
+              {product?.redeemInstructionConcise && (
+                <div className="space-y-1">
+                  <h3 className="text-base font-semibold text-silver-200">
+                    Redeem Instructions
+                  </h3>
 
-          <div className="bg-white/5 rounded-2xl p-5 space-y-4">
+                  <p className="text-sm text-silver-300 leading-relaxed whitespace-pre-line">
+                    {product.redeemInstructionConcise}
+                  </p>
+                </div>
+              )}
 
-            {product?.redeemInstructionConcise && (
+              {product?.redeemInstructionVerbose && (
+                <div className="space-y-1">
+                  <h3 className="text-base font-semibold text-silver-200">
+                    Detailed Instructions
+                  </h3>
 
-              <div className="space-y-1">
-
-                <h3 className="text-base font-semibold text-silver-200">
-                  Redeem Instructions
-                </h3>
-
-                <p className="text-sm text-silver-300 leading-relaxed whitespace-pre-line">
-                  {product.redeemInstructionConcise}
-                </p>
-
-              </div>
-
-            )}
-
-            {product?.redeemInstructionVerbose && (
-
-              <div className="space-y-1">
-
-                <h3 className="text-base font-semibold text-silver-200">
-                  Detailed Instructions
-                </h3>
-
-                <p className="text-sm text-silver-300 leading-relaxed whitespace-pre-line">
-                  {product.redeemInstructionVerbose}
-                </p>
-
-              </div>
-
-            )}
-
-          </div>
-
-        )}
+                  <p className="text-sm text-silver-300 leading-relaxed whitespace-pre-line">
+                    {product.redeemInstructionVerbose}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-
       </div>
-
-
 
       {/* Confirm Modal */}
 
@@ -426,11 +377,8 @@ export default function GiftcardPurchasePage() {
         open={confirmOpen}
         onClose={() => !processing && setConfirmOpen(false)}
       >
-
         {success ? (
-
           <div className="flex flex-col items-center text-center py-8 space-y-4">
-
             <CircleCheck className="text-green-500" size={48} />
 
             <h3 className="text-lg font-semibold">
@@ -443,25 +391,15 @@ export default function GiftcardPurchasePage() {
             >
               Done
             </button>
-
           </div>
-
         ) : processing ? (
-
           <div className="flex flex-col items-center py-10 space-y-4">
-
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
 
-            <p className="text-sm text-gray-400">
-              Processing your purchase...
-            </p>
-
+            <p className="text-sm text-gray-400">Processing your purchase...</p>
           </div>
-
         ) : (
-
           <div className="space-y-4 text-sm">
-
             <div className="flex justify-center text-xl font-semibold mb-5">
               Confirm Purchase
             </div>
@@ -482,12 +420,10 @@ export default function GiftcardPurchasePage() {
             </div>
 
             {totalFee > 0 && (
-
               <div className="flex justify-between">
                 <span>Processing Fee</span>
                 <span>{formatMoney(totalFee)}</span>
               </div>
-
             )}
 
             <div className="flex justify-between font-bold border-t pt-2">
@@ -502,26 +438,20 @@ export default function GiftcardPurchasePage() {
             >
               Confirm Purchase
             </button>
-
           </div>
-
         )}
-
       </ModalBottomSheet>
 
       {/* Error Modal */}
 
       {errorOpen && (
-
         <AlertModal
           type="error"
           title="Purchase Failed"
           message={errorMessage}
           onClose={() => setErrorOpen(false)}
         />
-
       )}
-
     </>
   );
 }
