@@ -88,7 +88,7 @@ export default function AirtimePurchaseForm() {
 
   return (
     <div className="min-h-screen text-white p-3 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Instant Airtime Recharge</h1>
+      <h1 className="text-lg font-bold">Airtime Recharge</h1>
       <p className="text-slate-400 text-sm mb-6">
         Fast, secure and delivered immediately
       </p>

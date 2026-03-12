@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { FaHome, FaWallet, FaBell, FaUser, FaPlus } from "react-icons/fa";
+import { FaHome, FaWallet, FaTrophy , FaUser, FaPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 /* moved outside to avoid re-creation every render */
@@ -9,7 +9,7 @@ const menus = [
   { name: "Home", icon: FaHome, href: "/dashboard" },
   { name: "Wallet", icon: FaWallet, href: "/dashboard/wallet" },
   { name: "", icon: FaPlus, action: () => console.log("open modal"), center: true },
-  { name: "Alerts", icon: FaBell, href: "/dashboard/notifications", badge: 3 },
+  { name: "Rewards", icon: FaTrophy , href: "/dashboard/reward"},
   { name: "Profile", icon: FaUser, href: "/dashboard/profile" },
 ];
 
