@@ -1,10 +1,10 @@
-import ForgotPasswordPage from "./forgot-password";
+import ResetPasswordPage from "./reset";
 
 export const metadata = {
-  title: "Reset Password",
+  title: "Forgot Password",
   description: "Reset your account password securely",
 };
 
 export default function Page() {
-  return <ForgotPasswordPage />;
+  return <ResetPasswordPage />;
 }

@@ -246,9 +246,9 @@ export function useLogout() {
         return result;
       }
 
-      // clear client storage
+      // ✅ ONLY clear session-related data
       sessionStorage.clear();
-      localStorage.clear();
+      localStorage.removeItem("authToken"); // keep rememberMe intact
 
       safeSetState(() => {
         setSuccess(true);

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ArrowRight, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BottomSheet from "../_components/vtuModal";
+import { usePurchaseAirtime } from "../../../../hooks/usePurchaseAirtime";
+import AlertModal from "../_components/alertModal";
 
 const NETWORKS = [
   {
@@ -28,7 +30,7 @@ const NETWORKS = [
     logo: "/images/glo.png",
   },
   {
-    id: "9mobile",
+    id: "t2mobile",
     name: "T2Mobile",
     accent: "from-orange-500 to-orange-700",
     text: "text-white",
@@ -45,15 +47,35 @@ const formatCurrency = (value) =>
     minimumFractionDigits: 0,
   });
 
+/* ---------------- Skeleton Component ---------------- */
+function Skeleton({ className }) {
+  return (
+    <div className={`animate-pulse bg-white/10 rounded-md ${className}`} />
+  );
+}
+
 export default function AirtimePurchaseForm() {
   const router = useRouter();
+
+  const { buyAirtime, error, loading, detectNetworkFromPhone } =
+    usePurchaseAirtime();
 
   const [network, setNetwork] = useState("");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [showSummary, setShowSummary] = useState(false);
 
+  const [pageLoading, setPageLoading] = useState(true);
+
+  const [alert, setAlert] = useState({
+    open: false,
+    type: "error",
+    title: "",
+    message: "",
+  });
+
   const selectedNetwork = NETWORKS.find((n) => n.id === network);
+
   const numericAmount = Number(amount);
 
   const discount = useMemo(
@@ -70,40 +92,123 @@ export default function AirtimePurchaseForm() {
   const validAmount = numericAmount >= 50;
   const formValid = network && validPhone && validAmount;
 
+  /* ---------------- Page Loading Effect ---------------- */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 800); // simulate loading
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (error) {
+      setAlert({
+        open: true,
+        type: "error",
+        title: "Sorry",
+        message: error,
+      });
+    }
+  }, [error]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formValid) return;
+
+    if (!formValid) {
+      setAlert({
+        open: true,
+        type: "warning",
+        title: "Invalid Input",
+        message: "Please enter a valid phone number and amount.",
+      });
+      return;
+    }
+
     setShowSummary(true);
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedNetwork) return;
 
-    const ref = "TXN" + Date.now().toString().slice(-8);
+    try {
+      const data = await buyAirtime({
+        number: phone,
+        amount: numericAmount,
+        serviceId: selectedNetwork.id,
+      });
 
-    router.push(`/dashboard/airtime/success?network=${encodeURIComponent(
-  selectedNetwork.name
-)}&phone=${phone}&amount=${numericAmount}&paid=${total}&ref=${ref}`);
+      router.push(
+        `/dashboard/airtime/success?network=${encodeURIComponent(
+          selectedNetwork.name
+        )}&phone=${phone}&amount=${numericAmount}&paid=${total}&ref=${
+          data.reference
+        }`
+      );
+    } catch (err) {
+      setAlert({
+        open: true,
+        type: "error",
+        title: "Transaction Failed",
+        message:
+          err?.message ||
+          "Something went wrong while processing your airtime purchase.",
+      });
+    }
   };
 
+  /* ---------------- Skeleton UI ---------------- */
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen text-white p-3 max-w-3xl mx-auto space-y-6">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-4 w-60" />
+
+        <div className="flex gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-10 w-20 rounded-md" />
+          ))}
+        </div>
+
+        <div className="bg-white/5 border border-slate-800 rounded-3xl p-7 space-y-6">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-xl" />
+            ))}
+          </div>
+
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------------- Main UI ---------------- */
   return (
     <div className="min-h-screen text-white p-3 max-w-3xl mx-auto">
       <h1 className="text-lg font-bold">Airtime Recharge</h1>
+
       <p className="text-slate-400 text-sm mb-6">
         Fast, secure and delivered immediately
       </p>
 
-      {/* NETWORK SELECT */}
+      {/* NETWORKS */}
       <div className="flex flex-wrap gap-2 mb-6 bg-white/5 rounded-lg p-3">
         {NETWORKS.map((net) => (
           <button
             key={net.id}
             type="button"
             onClick={() => setNetwork(net.id)}
-            className={`flex items-center gap-2 rounded-md px-5 py-3 transition-all duration-200 text-sm font-semibold
+            className={`flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition
             ${
               network === net.id
-                ? `bg-linear-to-br ${net.accent} ${net.text} scale-[1.03] border-transparent shadow-lg`
+                ? `bg-linear-to-br ${net.accent} ${net.text} scale-[1.03]`
                 : "bg-white/10 text-slate-300"
             }`}
           >
@@ -120,12 +225,13 @@ export default function AirtimePurchaseForm() {
         {/* PHONE */}
         <div className="space-y-2">
           <label className="text-sm text-slate-400">Phone Number</label>
+
           <div className="flex items-center bg-white/10 gap-3 rounded-xl px-4 py-3">
             {selectedNetwork ? (
               <img
                 src={selectedNetwork.logo}
                 alt={selectedNetwork.name}
-                className="w-5 h-5 rounded-full object-contain"
+                className="w-5 h-5"
               />
             ) : (
               <Smartphone size={18} className="text-slate-400" />
@@ -135,22 +241,31 @@ export default function AirtimePurchaseForm() {
               type="tel"
               value={phone}
               maxLength={11}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
               placeholder="08012345678"
               className="bg-transparent outline-none w-full"
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                setPhone(value);
+
+                if (value.length >= 4) {
+                  const detected = detectNetworkFromPhone(value);
+                  if (detected) setNetwork(detected);
+                }
+              }}
             />
           </div>
         </div>
 
         {/* AMOUNT */}
         <div className="space-y-2">
-          <label className="text-sm text-silver-400">Amount</label>
+          <label className="text-sm text-slate-400">Amount</label>
+
           <input
             type="text"
             inputMode="numeric"
             value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
             placeholder="₦50 - ₦500,000"
+            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
             className="w-full bg-white/10 rounded-xl px-4 py-3 text-sm outline-none"
           />
         </div>
@@ -173,7 +288,8 @@ export default function AirtimePurchaseForm() {
         <button
           type="submit"
           disabled={!formValid}
-          className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 font-semibold transition ${
+          className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 font-semibold
+          ${
             formValid ? "bg-primary-500" : "bg-secondary-700 cursor-not-allowed"
           }`}
         >
@@ -181,38 +297,64 @@ export default function AirtimePurchaseForm() {
         </button>
       </form>
 
-      {/* CONFIRM MODAL */}
+      {/* CONFIRMATION MODAL */}
       <BottomSheet
         open={showSummary}
-        onClose={() => setShowSummary(false)}
+        onClose={() => !loading && setShowSummary(false)}
         title="Confirm Purchase"
       >
-        <Row label="Network" value={selectedNetwork?.name} />
-        <Row label="Phone" value={phone} />
-        <Row label="Airtime" value={formatCurrency(numericAmount)} />
-        <Row label="Discount" value={`- ${formatCurrency(discount)}`} />
+        {loading ? (
+          <div className="flex flex-col items-center py-10 gap-3">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm text-slate-400">Processing payment...</p>
+          </div>
+        ) : (
+          <>
+            <Row label="Network" value={selectedNetwork?.name} />
+            <Row label="Phone" value={phone} />
+            <Row label="Airtime" value={formatCurrency(numericAmount)} />
+            <Row label="Discount" value={`- ${formatCurrency(discount)}`} />
 
-        <div className="border-t border-slate-800 pt-3 flex justify-between font-semibold text-lg">
-          <span>Total</span>
-          <span className="text-emerald-400">{formatCurrency(total)}</span>
-        </div>
+            <div className="border-t border-slate-800 pt-3 flex justify-between font-semibold text-lg">
+              <span>Total</span>
+              <span className="text-emerald-400">
+                {formatCurrency(total)}
+              </span>
+            </div>
 
-        <button
-          onClick={handlePayment}
-          className="w-full mt-3 py-2 rounded-xl bg-primary-500 font-semibold"
-        >
-          Pay
-        </button>
+            <button
+              onClick={handlePayment}
+              className="w-full mt-3 py-3 rounded-xl bg-primary-500 font-semibold"
+            >
+              Pay
+            </button>
+          </>
+        )}
       </BottomSheet>
+
+      {/* ALERT MODAL */}
+      {alert.open && (
+        <AlertModal
+          type={alert.type}
+          title={alert.title}
+          message={alert.message}
+          onClose={() =>
+            setAlert((prev) => ({
+              ...prev,
+              open: false,
+            }))
+          }
+        />
+      )}
     </div>
   );
 }
 
 function Row({ label, value }) {
   return (
-    <div className="flex justify-between text-sm">
+    <div className="flex justify-between text-sm items-center">
       <span className="text-slate-400">{label}</span>
-      <span className="font-medium">{value || "-"}</span>
+      <div className="font-medium">{value || "-"}</div>
     </div>
   );
 }

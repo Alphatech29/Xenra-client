@@ -1,17 +1,35 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import FormInput from "../../../../components/ui/formInput";
 import { useRegister } from "../../../../hooks/useAuth";
 import useToast from "../../../../hooks/useToast";
 
+/* Password strength checker */
+function getPasswordStrength(password) {
+  let score = 0;
+
+  if (password.length >= 6) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2) return { label: "Weak", color: "bg-red-500", width: "33%" };
+  if (score === 3 || score === 4)
+    return { label: "Medium", color: "bg-yellow-500", width: "66%" };
+
+  return { label: "Strong", color: "bg-green-500", width: "100%" };
+}
+
 export default function RegisterPage() {
   const { register, loading, error, success, message } = useRegister();
   const toast = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const successRef = useRef(false);
 
@@ -20,29 +38,81 @@ export default function RegisterPage() {
     email: "",
     phone: "",
     password: "",
+    referral: "",
   });
 
   const [localErrors, setLocalErrors] = useState({});
 
-  // capture input values
-  const handleChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const passwordStrength = getPasswordStrength(form.password);
 
-    // clear field error when user types
-    setLocalErrors((prev) => ({ ...prev, [name]: "" }));
+  /* Capture referral from URL or localStorage */
+  useEffect(() => {
+    const refFromUrl =
+      searchParams.get("ref") ||
+      searchParams.get("referral") ||
+      searchParams.get("invite");
+
+    if (refFromUrl) {
+      setForm((prev) => ({
+        ...prev,
+        referral: refFromUrl,
+      }));
+
+      localStorage.setItem("referral_code", refFromUrl);
+    } else {
+      const storedRef = localStorage.getItem("referral_code");
+
+      if (storedRef) {
+        setForm((prev) => ({
+          ...prev,
+          referral: storedRef,
+        }));
+      }
+    }
+  }, [searchParams]);
+
+  /* Handle input change */
+  const handleChange = (name, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (name === "referral") {
+      localStorage.setItem("referral_code", value);
+    }
+
+    setLocalErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   };
 
-  // submit
+  /* Submit */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     successRef.current = false;
 
     const errors = {};
-    if (!form.fullname.trim()) errors.fullname = "Full name is required";
-    if (!form.email.trim()) errors.email = "Email is required";
-    if (!form.phone.trim()) errors.phone = "Phone number is required";
-    if (!form.password.trim()) errors.password = "Password is required";
+
+    if (!form.fullname.trim())
+      errors.fullname = "Full name is required";
+
+    if (!form.email.trim())
+      errors.email = "Email is required";
+
+    if (!/\S+@\S+\.\S+/.test(form.email))
+      errors.email = "Enter a valid email";
+
+    if (!form.phone.trim())
+      errors.phone = "Phone number is required";
+
+    if (!form.password.trim())
+      errors.password = "Password is required";
+
+    if (form.password.length < 6)
+      errors.password = "Password must be at least 6 characters";
 
     if (Object.keys(errors).length) {
       setLocalErrors(errors);
@@ -50,58 +120,47 @@ export default function RegisterPage() {
     }
 
     await register({
-      fullname: form.fullname,
-      email: form.email,
-      phone: form.phone,
+      fullname: form.fullname.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
       password: form.password,
+      referral_code: form.referral || null,
     });
   };
 
+  /* SUCCESS HANDLER */
+  useEffect(() => {
+    if (!success || successRef.current) return;
 
-// SUCCESS HANDLER (runs once)
-useEffect(() => {
-  if (!success || successRef.current) return;
+    successRef.current = true;
 
-  successRef.current = true;
+    const registeredEmail = form.email;
+    const registeredPassword = form.password;
 
-  // Capture values BEFORE anything resets
-  const registeredEmail = form.email;
-  const registeredPassword = form.password;
+    toast.success(message || "Account created successfully");
 
-  toast.success(message || "Account created successfully");
+    const verifyPayload = {
+      email: registeredEmail,
+      password: registeredPassword,
+    };
 
-  // Store safely
-  const verifyPayload = {
-    email: registeredEmail,
-    password: registeredPassword,
-  };
+    sessionStorage.setItem("verifyData", JSON.stringify(verifyPayload));
 
-  sessionStorage.setItem("verifyData", JSON.stringify(verifyPayload));
+    setForm({
+      fullname: "",
+      email: "",
+      phone: "",
+      password: "",
+      referral: "",
+    });
 
-  // 🔎 Log immediately after storing
-  console.log(
-    "Stored verifyData:",
-    sessionStorage.getItem("verifyData")
-  );
+    setLocalErrors({});
 
-  // Reset form AFTER storing
-  setForm({
-    fullname: "",
-    email: "",
-    phone: "",
-    password: "",
-  });
+    router.push(`/auth/verify?email=${registeredEmail}`);
+  }, [success, message, router]);
 
-  setLocalErrors({});
-
-  router.push(`/auth/verify?email=${registeredEmail}`);
-}, [success, message]);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#041031] px-4 text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-125 w-125 -translate-x-1/2 rounded-full bg-primary-500/20 blur-[140px]" />
-        <div className="absolute bottom-0 left-0 h-105 w-105 rounded-full bg-secondary-500/20 blur-[140px]" />
-      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.96 }}
@@ -109,75 +168,83 @@ useEffect(() => {
         transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.6)]"
       >
+
+        {/* Header */}
         <div className="mb-8 flex flex-col items-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-secondary-400 to-primary-600 text-xl font-bold text-black shadow-lg shadow-primary-600/40">
             X
           </div>
+
           <h1 className="text-2xl font-semibold tracking-wide">
             Create account
           </h1>
+
           <p className="mt-1 text-sm text-white/60">
             Join us and start your journey today
           </p>
         </div>
 
+        {error && (
+          <p className="mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400 border border-red-500/20 text-center">
+            {error}
+          </p>
+        )}
+
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-5 sm:grid-cols-2">
-            {/* API error only */}
-            {error && (
-              <p className="rounded-lg bg-red-500/10 px-3 text-center py-2 text-sm text-red-400 border border-red-500/20">
-                {error}
-              </p>
-            )}
 
+            {/* FULL NAME */}
             <div>
               <FormInput
                 label="Full Name"
                 name="fullname"
-                placeholder="Xenra User"
+                placeholder="Enter your full name"
                 value={form.fullname}
                 onChange={handleChange}
               />
               {localErrors.fullname && (
-                <p className="mt-1 px-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-red-400">
                   {localErrors.fullname}
                 </p>
               )}
             </div>
 
+            {/* EMAIL */}
             <div>
               <FormInput
-              label="Email"
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-            />
-            {localErrors.email && (
-                <p className="mt-1 px-1 text-xs text-red-400">
+                label="Email"
+                type="email"
+                name="email"
+                placeholder="Enter your email address"
+                value={form.email}
+                onChange={handleChange}
+              />
+              {localErrors.email && (
+                <p className="mt-1 text-xs text-red-400">
                   {localErrors.email}
                 </p>
               )}
             </div>
 
+            {/* PHONE */}
             <div>
               <FormInput
-              label="Phone Number"
-              type="phone"
-              name="phone"
-              placeholder="Enter phone number"
-              value={form.phone?.replace(/^\+\d{1,4}/, "")}
-              onChange={handleChange}
-            />
-            {localErrors.phone && (
-                <p className="mt-1 px-1 text-xs text-red-400">
+                label="Phone Number"
+                type="phone"
+                name="phone"
+                placeholder="Enter phone number"
+                value={form.phone}
+                onChange={handleChange}
+              />
+              {localErrors.phone && (
+                <p className="mt-1 text-xs text-red-400">
                   {localErrors.phone}
                 </p>
               )}
             </div>
 
-          <div>
+            {/* PASSWORD */}
+            <div>
               <FormInput
                 label="Password"
                 name="password"
@@ -186,12 +253,51 @@ useEffect(() => {
                 value={form.password}
                 onChange={handleChange}
               />
+
+              {form.password && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-white/60 mb-1">
+                    <span>Password strength</span>
+                    <span
+                      className={`font-semibold ${
+                        passwordStrength.label === "Weak"
+                          ? "text-red-400"
+                          : passwordStrength.label === "Medium"
+                          ? "text-yellow-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      {passwordStrength.label}
+                    </span>
+                  </div>
+
+                  <div className="h-1 w-full bg-white/10 rounded overflow-hidden">
+                    <div
+                      className={`h-full ${passwordStrength.color}`}
+                      style={{ width: passwordStrength.width }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {localErrors.password && (
-                <p className="mt-1 px-1 text-xs text-red-400">
+                <p className="mt-1 text-xs text-red-400">
                   {localErrors.password}
                 </p>
               )}
-          </div>
+            </div>
+
+            {/* REFERRAL */}
+            <div className="sm:col-span-2">
+              <FormInput
+                label="Referral Code (Optional)"
+                name="referral"
+                placeholder="Enter referral code"
+                value={form.referral}
+                onChange={handleChange}
+              />
+            </div>
+
           </div>
 
           <motion.button
@@ -213,6 +319,7 @@ useEffect(() => {
             Sign in
           </Link>
         </p>
+
       </motion.div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
 
-  const { login, loading, error } = useLogin();
+  const { login, loading } = useLogin();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,6 +25,27 @@ export default function LoginPage() {
   const [localErrors, setLocalErrors] = useState({});
 
   const isLoading = loading || submitting;
+
+  /* ---------------- LOAD REMEMBERED DATA ---------------- */
+
+  useEffect(() => {
+    const saved = localStorage.getItem("rememberMe");
+
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+
+        setForm({
+          email: data.email || "",
+          password: data.password || "",
+          remember: true,
+        });
+      } catch (err) {
+        console.error("Invalid stored data");
+        localStorage.removeItem("rememberMe");
+      }
+    }
+  }, []);
 
   /* ---------------- VALIDATION ---------------- */
 
@@ -52,7 +73,6 @@ export default function LoginPage() {
       [name]: value,
     }));
 
-    // clear field error when user types
     setLocalErrors((prev) => ({
       ...prev,
       [name]: "",
@@ -82,11 +102,26 @@ export default function LoginPage() {
 
       if (result?.success) {
         toast.success(result.message || "Login successful");
+
+        // 🔥 SAVE REMEMBER ME DATA
+        if (form.remember) {
+          localStorage.setItem(
+            "rememberMe",
+            JSON.stringify({
+              email: form.email,
+              password: form.password,
+            })
+          );
+        } else {
+          localStorage.removeItem("rememberMe");
+        }
+
         router.replace("/dashboard");
       } else {
         toast.error(result?.message || "Login failed");
       }
     } catch (err) {
+      console.error(err);
     } finally {
       setSubmitting(false);
     }

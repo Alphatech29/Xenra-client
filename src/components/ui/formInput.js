@@ -1,16 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { countries } from "../../utils/countries";
-
-const detectCountryFromNumber = (input, list) => {
-  if (!input.startsWith("+")) return null;
-  const sorted = [...list].sort((a, b) => b.dial.length - a.dial.length);
-  return sorted.find((c) => input.startsWith(c.dial)) || null;
-};
-
-const isNigerianLocal = (num) => /^(070|080|081|090|091)\d{8}$/.test(num);
 
 export default function FormInput({
   label,
@@ -23,45 +15,70 @@ export default function FormInput({
 }) {
   const [show, setShow] = useState(false);
   const [open, setOpen] = useState(false);
-  const [country, setCountry] = useState(null);
+  const [search, setSearch] = useState("");
 
   /* Default country = Nigeria */
-  useEffect(() => {
-    const nigeria = countries.find((c) => c.iso === "NG") || countries[0];
-    setCountry(nigeria);
-  }, []);
+  const [country, setCountry] = useState(() => {
+    return countries?.find((c) => c.iso === "NG") || countries?.[0] || null;
+  });
 
-  /* Lock scroll when modal open */
+  /* Lock body scroll when modal opens */
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => (document.body.style.overflow = "");
+    if (typeof document !== "undefined") {
+      document.body.style.overflow = open ? "hidden" : "";
+    }
+
+    return () => {
+      if (typeof document !== "undefined") {
+        document.body.style.overflow = "";
+      }
+    };
   }, [open]);
+
+  /* Filter countries */
+  const filteredCountries = useMemo(() => {
+    if (!search) return countries;
+
+    const q = search.toLowerCase();
+
+    return countries.filter((c) => {
+      return (
+        c?.name?.toLowerCase().includes(q) ||
+        c?.iso?.toLowerCase().includes(q) ||
+        c?.dial?.includes(q)
+      );
+    });
+  }, [search]);
 
   const inputType = showToggle ? (show ? "text" : "password") : type;
 
-  const handleChange = (e) => {
-    if (!onChange || !country) return;
+  /* Strip dial code from display */
+  const displayValue = useMemo(() => {
+    if (type !== "phone" || !country) return value ?? "";
 
-    let raw = e.target.value.trim();
+    const dialPrefix = country?.dial;
+
+    if (typeof value === "string" && dialPrefix && value.startsWith(dialPrefix)) {
+      return value.slice(dialPrefix.length);
+    }
+
+    return value ?? "";
+  }, [type, value, country]);
+
+  const handleChange = (e) => {
+    if (!onChange) return;
+
+    let raw = e.target.value;
 
     if (type === "phone") {
-      const detected = detectCountryFromNumber(raw, countries);
-      if (detected) {
-        setCountry(detected);
-        raw = raw.slice(detected.dial.length);
-      }
+      if (!country?.dial) return;
 
+      /* Keep only digits */
       raw = raw.replace(/\D/g, "");
 
-      if (isNigerianLocal(raw)) {
-        const nigeria = countries.find((c) => c.iso === "NG");
-        if (nigeria) {
-          setCountry(nigeria);
-          raw = raw.replace(/^0/, "");
-          onChange(name, `${nigeria.dial}${raw}`);
-          return;
-        }
+      if (!raw) {
+        onChange(name, "");
+        return;
       }
 
       onChange(name, `${country.dial}${raw}`);
@@ -73,6 +90,12 @@ export default function FormInput({
   const selectCountry = (c) => {
     setCountry(c);
     setOpen(false);
+    setSearch("");
+
+    /* Clear phone value when country changes */
+    if (type === "phone" && onChange) {
+      onChange(name, "");
+    }
   };
 
   return (
@@ -87,21 +110,24 @@ export default function FormInput({
         <input
           name={name}
           type={type === "phone" ? "tel" : inputType}
-          value={value ?? ""}
+          inputMode={type === "phone" ? "numeric" : undefined}
+          pattern={type === "phone" ? "[0-9]*" : undefined}
+          maxLength={type === "phone" ? 12 : undefined}
+          value={displayValue}
           onChange={handleChange}
           placeholder={placeholder}
           autoComplete="off"
           className={`w-full rounded-xl border border-white/10 bg-white/5 py-3 text-sm outline-none transition
           focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30
-          ${type === "phone" ? "pl-16 pr-4" : "px-4 pr-12"}`}
+          ${type === "phone" ? "pl-20 pr-4" : "px-4 pr-12"}`}
         />
 
-        {/* COUNTRY SELECTOR BUTTON */}
+        {/* Country selector */}
         {type === "phone" && country && (
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/10 active:scale-95 transition"
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/10"
           >
             <Image
               src={country.flag}
@@ -111,13 +137,18 @@ export default function FormInput({
               className="rounded-sm object-cover"
               unoptimized
             />
-            <svg className="h-3 w-3 text-white/50" viewBox="0 0 20 20" fill="currentColor">
+
+            <svg
+              className="h-3 w-3 text-white/50"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
               <path d="M5 7l5 5 5-5H5z" />
             </svg>
           </button>
         )}
 
-        {/* PASSWORD TOGGLE */}
+        {/* Password toggle */}
         {showToggle && type !== "phone" && (
           <button
             type="button"
@@ -129,35 +160,43 @@ export default function FormInput({
         )}
       </div>
 
-      {/* CENTER MODAL COUNTRY PICKER */}
+      {/* Country picker modal */}
       {open && (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 "
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
 
-          {/* Modal */}
-          <div className="relative w-[92%] max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#00104b] shadow-[0_20px_80px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative w-[92%] max-w-md rounded-2xl border border-white/10 bg-[#00104b] shadow-[0_20px_80px_rgba(0,0,0,0.9)]">
 
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <span className="text-sm font-medium text-white/80">
-                Select Country
-              </span>
+            <div className="border-b border-white/10 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm text-white/80">
+                  Select Country
+                </span>
 
-              <button
-                onClick={() => setOpen(false)}
-                className="text-white/50 hover:text-white text-lg leading-none"
-              >
-                ×
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-white/60 hover:text-white"
+                >
+                  ×
+                </button>
+              </div>
+
+              <input
+                placeholder="Search country..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+              />
             </div>
 
             {/* Country list */}
-            <div className="max-h-[60vh] overflow-y-auto py-2">
-              {countries.map((c) => {
+            <div className="max-h-[60vh] overflow-y-auto">
+              {filteredCountries.map((c) => {
                 const active = country?.iso === c.iso;
 
                 return (
@@ -165,31 +204,30 @@ export default function FormInput({
                     key={c.iso}
                     type="button"
                     onClick={() => selectCountry(c)}
-                    className={`group flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition
-                    ${active ? "bg-cyan-500/10" : "hover:bg-white/5 active:scale-[0.99]"}`}
+                    className={`flex w-full items-center gap-3 px-4 py-3 text-sm transition
+                    ${active ? "bg-cyan-500/10" : "hover:bg-white/5"}`}
                   >
-                    <div className="flex h-7 w-9 items-center justify-center rounded-md bg-white/5">
-                      <Image
-                        src={c.flag}
-                        alt={c.iso}
-                        width={26}
-                        height={18}
-                        className="rounded-sm object-cover"
-                        unoptimized
-                      />
-                    </div>
+                    <Image
+                      src={c.flag}
+                      alt={c.iso}
+                      width={26}
+                      height={18}
+                      className="rounded-sm"
+                      unoptimized
+                    />
 
-                    <span className={`flex-1 truncate ${active ? "text-cyan-300" : "text-white/90"}`}>
+                    <span className="flex-1 text-left text-white/90">
                       {c.name}
                     </span>
 
-                    <span className={`tabular-nums ${active ? "text-cyan-400" : "text-white/40 group-hover:text-white/70"}`}>
+                    <span className="text-white/50">
                       {c.dial}
                     </span>
                   </button>
                 );
               })}
             </div>
+
           </div>
         </div>
       )}
