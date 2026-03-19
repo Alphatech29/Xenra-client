@@ -73,7 +73,6 @@ const detectNetwork = (phone) => {
   return null;
 };
 
-// FIX: Removed duplicate export default — only one function definition
 export default function DataPurchaseForm() {
   const router = useRouter();
 
@@ -86,7 +85,6 @@ export default function DataPurchaseForm() {
 
   const [alert, setAlert] = useState({ message: "" });
 
-  // FIX: memoized selectedNetwork to avoid recomputing on every render
   const selectedNetwork = useMemo(
     () => NETWORKS.find((n) => n.id === network),
     [network]
@@ -112,7 +110,6 @@ export default function DataPurchaseForm() {
     }
   }, [plans, plan]);
 
-  // FIX: Added `network` to dependency array to prevent stale closure
   useEffect(() => {
     if (manualNetwork) return;
 
@@ -143,13 +140,11 @@ export default function DataPurchaseForm() {
     }
   }, [purchaseError]);
 
-  /* ---------------- COMPUTED ---------------- */
   const currentPlans = groupedPlans?.[activeGroup] ?? [];
   const total = useMemo(() => plan?.amount || 0, [plan]);
   const validPhone = /^0\d{10}$/.test(phone);
   const formValid = !loading && network && validPhone && plan;
 
-  /* ---------------- ACTIONS ---------------- */
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -172,7 +167,6 @@ export default function DataPurchaseForm() {
     if (!res?.success) return;
   };
 
-  // FIX: Safer retry guard
   const handleRetry = () => {
     if (typeof refetch === "function") {
       refetch();
@@ -183,7 +177,7 @@ export default function DataPurchaseForm() {
 
   return (
     <div className="min-h-screen pb-28 text-white p-4 max-w-3xl mx-auto">
-      <h1 className="text-xl font-bold mb-1">Buy Mobile Data</h1>
+      <h1 className="text-base font-bold mb-1">Buy Data</h1>
       <p className="text-slate-400 text-sm mb-6">Choose network and bundle</p>
 
       <div className="flex gap-2 mb-6 bg-white/5 rounded-lg p-3">
@@ -196,7 +190,6 @@ export default function DataPurchaseForm() {
               setPlan(null);
               setManualNetwork(true);
             }}
-            // FIX: Changed `bg-linear-to-br` → `bg-gradient-to-br` (valid Tailwind class)
             className={`flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold ${
               network === net.id
                 ? `bg-linear-to-br ${net.accent} ${net.text}`
@@ -336,7 +329,7 @@ export default function DataPurchaseForm() {
               </div>
             </div>
  
-            <h2 className="text-xl font-semibold text-white mb-1">
+            <h2 className="text-base font-semibold text-white mb-1">
               Payment Successful
             </h2>
  
@@ -344,7 +337,7 @@ export default function DataPurchaseForm() {
               Your data bundle has been activated successfully.
             </p>
  
-            <div className="mt-4 text-2xl font-bold text-emerald-400">
+            <div className="mt-4 text-xl font-bold text-emerald-400">
               {formatCurrency(total)}
             </div>
  
@@ -407,7 +400,6 @@ export default function DataPurchaseForm() {
   );
 }
 
-/* ---------------- ROW ---------------- */
 function Row({ label, value }) {
   return (
     <div className="flex justify-between text-sm">

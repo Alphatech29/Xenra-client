@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
                 ${
                   loading || cooldown > 0
                     ? "bg-secondary-600 cursor-not-allowed"
-                    : "bg-linear-to-r from-cyan-500 to-indigo-600 hover:shadow-indigo-500/50"
+                    : "bg-gradient-to-r from-cyan-500 to-indigo-600 hover:shadow-indigo-500/50"
                 }`}
             >
               {loading
@@ -95,3 +95,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

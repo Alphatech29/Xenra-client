@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { getDataVariations } from "../lib/dataVariations";
 
-/* ---------------- NORMALIZE AIRTEL ---------------- */
-
 const normalizeAirtelPlans = (plans = []) => {
   return plans.map((plan) => {
     let name = plan.name;
@@ -17,8 +15,6 @@ const normalizeAirtelPlans = (plans = []) => {
     return { ...plan, name };
   });
 };
-
-/* ---------------- NORMALIZE ETISALAT ---------------- */
 
 const normalizeEtisalatPlans = (plans = []) => {
   return plans.map((plan) => {
@@ -45,8 +41,6 @@ const normalizeEtisalatPlans = (plans = []) => {
     };
   });
 };
-
-/* ---------------- HELPERS ---------------- */
 
 const extractDetails = (plan) => {
   const name = plan.name || "";
@@ -130,8 +124,6 @@ const extractDetails = (plan) => {
   };
 };
 
-/* ---------------- DEDUPE ---------------- */
-
 const dedupePlans = (plans = []) => {
   const map = new Map();
 
@@ -150,8 +142,6 @@ const dedupePlans = (plans = []) => {
 
   return Array.from(map.values());
 };
-
-/* ---------------- GROUP ---------------- */
 
 const groupPlans = (plans = []) => {
   const groups = {
@@ -179,8 +169,6 @@ const groupPlans = (plans = []) => {
   return groups;
 };
 
-/* ---------------- HOOK ---------------- */
-
 export const useDataVariations = (serviceID) => {
   const [plans, setPlans] = useState([]);
   const [groupedPlans, setGroupedPlans] = useState({});
@@ -196,8 +184,6 @@ export const useDataVariations = (serviceID) => {
       try {
         setLoading(true);
         setError(null);
-
-        // ✅ Reset state (important for skeleton)
         setPlans([]);
         setGroupedPlans({});
 

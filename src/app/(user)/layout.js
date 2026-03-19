@@ -34,7 +34,7 @@ export default function PrivateLayout({ children }) {
             security and seamless navigation. Please continue on your smartphone.
           </p>
 
-          <div className="my-8 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
+          <div className="my-8 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
           <div className="space-y-2 text-sm text-white/60">
             <p>Open this link on your mobile device</p>

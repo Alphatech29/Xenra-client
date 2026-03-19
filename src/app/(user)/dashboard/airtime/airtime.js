@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { ArrowRight, Smartphone } from "lucide-react";
-import { useRouter } from "next/navigation";
 import BottomSheet from "../_components/vtuModal";
 import { usePurchaseAirtime } from "../../../../hooks/usePurchaseAirtime";
 import AlertModal from "../_components/alertModal";
@@ -55,8 +54,6 @@ function Skeleton({ className }) {
 }
 
 export default function AirtimePurchaseForm() {
-  const router = useRouter();
-
   const { buyAirtime, error, loading, detectNetworkFromPhone } =
     usePurchaseAirtime();
 
@@ -64,6 +61,8 @@ export default function AirtimePurchaseForm() {
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [showSummary, setShowSummary] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [reference, setReference] = useState("");
 
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -96,7 +95,7 @@ export default function AirtimePurchaseForm() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setPageLoading(false);
-    }, 800); // simulate loading
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
@@ -138,13 +137,8 @@ export default function AirtimePurchaseForm() {
         serviceId: selectedNetwork.id,
       });
 
-      router.push(
-        `/dashboard/airtime/success?network=${encodeURIComponent(
-          selectedNetwork.name
-        )}&phone=${phone}&amount=${numericAmount}&paid=${total}&ref=${
-          data.reference
-        }`
-      );
+      setReference(data?.reference || "");
+      setSuccess(true);
     } catch (err) {
       setAlert({
         open: true,
@@ -154,7 +148,17 @@ export default function AirtimePurchaseForm() {
           err?.message ||
           "Something went wrong while processing your airtime purchase.",
       });
+      setShowSummary(false);
     }
+  };
+
+  const handleDone = () => {
+    setShowSummary(false);
+    setSuccess(false);
+    setReference("");
+    setPhone("");
+    setAmount("");
+    setNetwork("");
   };
 
   /* ---------------- Skeleton UI ---------------- */
@@ -192,7 +196,7 @@ export default function AirtimePurchaseForm() {
   /* ---------------- Main UI ---------------- */
   return (
     <div className="min-h-screen text-white p-3 max-w-3xl mx-auto">
-      <h1 className="text-lg font-bold">Airtime Recharge</h1>
+      <h1 className="text-base font-bold">Airtime Recharge</h1>
 
       <p className="text-slate-400 text-sm mb-6">
         Fast, secure and delivered immediately
@@ -300,13 +304,51 @@ export default function AirtimePurchaseForm() {
       {/* CONFIRMATION MODAL */}
       <BottomSheet
         open={showSummary}
-        onClose={() => !loading && setShowSummary(false)}
-        title="Confirm Purchase"
+        onClose={() => !loading && !success && setShowSummary(false)}
+        title={loading ? "Processing Payment" : success ? "Payment Successful" : "Confirm Purchase"}
       >
         {loading ? (
           <div className="flex flex-col items-center py-10 gap-3">
             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             <p className="text-sm text-slate-400">Processing payment...</p>
+          </div>
+        ) : success ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-xl"></div>
+              <div className="relative w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold text-white mb-1">
+              Payment Successful
+            </h2>
+
+            <p className="text-sm text-slate-400 max-w-xs">
+              Your airtime has been recharged successfully.
+            </p>
+
+            <div className="mt-4 text-2xl font-bold text-emerald-400">
+              {formatCurrency(total)}
+            </div>
+
+            <div className="w-full mt-6 bg-white/5 border border-slate-800 rounded-2xl p-4 space-y-2 text-sm">
+              <Row label="Network" value={selectedNetwork?.name} />
+              <Row label="Phone" value={phone} />
+              <Row label="Airtime" value={formatCurrency(numericAmount)} />
+              <Row label="Discount" value={`- ${formatCurrency(discount)}`} />
+              {reference && <Row label="Reference" value={reference} />}
+            </div>
+
+            <button
+              onClick={handleDone}
+              className="w-full mt-6 py-3 rounded-xl bg-primary-500 font-semibold hover:bg-primary-600 transition"
+            >
+              Done
+            </button>
           </div>
         ) : (
           <>

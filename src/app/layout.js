@@ -1,21 +1,9 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./hydration-debug";
 import HydrationProvider from "./HydrationProvider";
 import ToastProvider from "../context/toastProvider";
 import AlertProvider from "../context/alertProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-/* GLOBAL SEO DEFAULT */
 export const metadata = {
 
   title: {
@@ -48,7 +36,6 @@ export const metadata = {
   },
 };
 
-/* VIEWPORT (fix mobile zoom issues) */
 export const viewport = {
   width: "device-width",
   initialScale: 1,
@@ -59,7 +46,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`antialiased`}>
         <ToastProvider>
           <AlertProvider>
             <HydrationProvider>

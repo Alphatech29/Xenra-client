@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
                 ${
                   loading
                     ? "bg-secondary-600 cursor-not-allowed"
-                    : "bg-linear-to-r from-cyan-500 to-indigo-600 hover:shadow-indigo-500/50"
+                    : "bg-gradient-to-r from-cyan-500 to-indigo-600 hover:shadow-indigo-500/50"
                 }`}
             >
               {loading ? "Resetting..." : "Reset Password"}

@@ -8,7 +8,7 @@ export default function Loading() {
         <div className="relative flex items-center justify-center">
 
           {/* Gradient Glow */}
-          <div className="absolute w-32 h-32 rounded-full bg-linear-to-r from-primary-200 via-primary-100 to-transparent blur-xl opacity-70 animate-pulse"></div>
+          <div className="absolute w-32 h-32 rounded-full bg-gradient-to-r from-primary-200 via-primary-100 to-transparent blur-xl opacity-70 animate-pulse"></div>
 
           {/* Outer Ring */}
           <div className="absolute w-20 h-20 rounded-full border-4 border-primary-100"></div>
@@ -31,7 +31,7 @@ export default function Loading() {
 
         {/* Premium Progress Bar */}
         <div className="relative w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-          <div className="absolute inset-0 w-1/2 bg-linear-to-r from-primary-400 via-primary-500 to-primary-400 animate-loading-bar rounded-full"></div>
+          <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-primary-400 via-primary-500 to-primary-400 animate-loading-bar rounded-full"></div>
         </div>
 
       </div>

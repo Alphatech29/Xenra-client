@@ -6,7 +6,6 @@ import useToast from "../../../../hooks/useToast";
 import { useWallet } from "../../../../hooks/useWallet";
 import { useDedicatedAccount } from "../../../../hooks/useDedicatedAccount";
 
-/* ------------------ CRYPTO DATA ------------------ */
 const CRYPTO = {
   usdt: {
     name: "USDT",
@@ -32,13 +31,16 @@ const CRYPTO = {
   },
 };
 
-/* ------------------ MONEY FORMAT ------------------ */
 const formatMoney = (amount) => {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
   }).format(Number(amount || 0));
 };
+
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-white/10 ${className}`} />
+);
 
 export default function AddFundPage() {
   const toast = useToast();
@@ -57,23 +59,23 @@ export default function AddFundPage() {
 
   const copy = async (text, key, label) => {
     try {
-      if (!navigator?.clipboard) throw new Error("Clipboard not supported");
+      if (!navigator?.clipboard) throw new Error();
 
       await navigator.clipboard.writeText(text);
       setCopied(key);
-
       toast.success(`${label} copied successfully`);
-
       setTimeout(() => setCopied(""), 1500);
     } catch {
       toast.error("Unable to copy. Please copy manually.");
     }
   };
 
+  const loadingWallet = !wallet;
+  const loadingAccount = !account;
+
   return (
     <div className="min-h-screen text-white p-3 pb-32">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* HEADER */}
         <div>
           <h1 className="text-xl font-bold">Add Funds</h1>
           <p className="text-gray-400 text-sm">
@@ -81,19 +83,21 @@ export default function AddFundPage() {
           </p>
         </div>
 
-        {/* BALANCE CARD */}
         <div className="relative overflow-hidden rounded-3xl p-6 bg-linear-to-br from-indigo-600/30 to-purple-600/20 border border-white/10 backdrop-blur-xl">
           <div className="absolute right-0 top-0 h-32 w-32 bg-indigo-500/20 blur-3xl rounded-full" />
           <div className="absolute left-0 bottom-0 h-32 w-32 bg-purple-500/20 blur-3xl rounded-full" />
 
           <p className="text-gray-300 text-sm">Wallet Balance</p>
 
-          <h2 className="text-2xl font-bold mt-2">
-            {formatMoney(wallet?.available_balance)}
-          </h2>
+          {loadingWallet ? (
+            <Skeleton className="h-8 w-40 mt-2 rounded-lg" />
+          ) : (
+            <h2 className="text-2xl font-bold mt-2">
+              {formatMoney(wallet?.available_balance)}
+            </h2>
+          )}
         </div>
 
-        {/* METHOD SWITCH */}
         <div className="bg-white/5 p-1 rounded-2xl flex gap-2 backdrop-blur-xl border border-white/10">
           {["bank", "crypto"].map((m) => (
             <button
@@ -110,59 +114,61 @@ export default function AddFundPage() {
           ))}
         </div>
 
-        {/* ------------------ BANK UI ------------------ */}
-        {method === "bank" && account && (
+        {method === "bank" && (
           <>
-            <div className="relative rounded-3xl p-4 bg-linear-to-br from-primary-950 via-primary-1200 to-white/15 border border-white/10 shadow-xl overflow-hidden">
-              {/* Card Glow */}
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_left,white,transparent_60%)]"></div>
+            {loadingAccount ? (
+              <div className="rounded-3xl p-4 bg-white/5 border border-white/10 space-y-4">
+                <Skeleton className="h-4 w-32 rounded" />
+                <Skeleton className="h-6 w-48 rounded" />
+                <Skeleton className="h-10 w-full rounded" />
+                <Skeleton className="h-4 w-40 rounded" />
+              </div>
+            ) : (
+              <div className="relative rounded-3xl p-4 bg-linear-to-br from-primary-950 via-primary-1200 to-white/15 border border-white/10 shadow-xl overflow-hidden">
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_left,white,transparent_60%)]"></div>
 
-              {/* Top Row */}
-              <div className="flex justify-between items-start relative z-10">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">
-                    Virtual Account
-                  </p>
-                  <p className="text-sm font-semibold text-white">
-                    {account.bank_name}
-                  </p>
+                <div className="flex justify-between items-start relative z-10">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">
+                      Virtual Account
+                    </p>
+                    <p className="text-sm font-semibold text-white">
+                      {account.bank_name}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      copy(account.account_number, "acc", "Account number")
+                    }
+                    className="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 flex gap-2 items-center backdrop-blur"
+                  >
+                    {copied === "acc" ? (
+                      <CheckCircle size={14} />
+                    ) : (
+                      <Copy size={14} />
+                    )}
+                    Copy
+                  </button>
                 </div>
 
-                <button
-                  onClick={() =>
-                    copy(account.account_number, "acc", "Account number")
-                  }
-                  className="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 flex gap-2 items-center backdrop-blur"
-                >
-                  {copied === "acc" ? (
-                    <CheckCircle size={14} />
-                  ) : (
-                    <Copy size={14} />
-                  )}
-                  Copy
-                </button>
-              </div>
+                <div className="mt-6 mb-4 w-10 h-7 rounded-md bg-linear-to-br from-yellow-400 to-yellow-600"></div>
 
-              {/* Chip */}
-              <div className="mt-6 mb-4 w-10 h-7 rounded-md bg-linear-to-br from-yellow-400 to-yellow-600"></div>
+                <h3 className="text-xl font-bold tracking-[0.25em] text-white mb-6">
+                  {account.account_number}
+                </h3>
 
-              {/* Account Number */}
-              <h3 className="text-xl font-bold tracking-[0.25em] text-white mb-6">
-                {account.account_number}
-              </h3>
-
-              {/* Bottom Section */}
-              <div className="flex justify-between items-end text-sm text-white/90">
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400">Account Name</p>
-                  <p className="font-semibold text-sm wrap-break-word uppercase">
-                    {account.account_name}
-                  </p>
+                <div className="flex justify-between items-end text-sm text-white/90">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-400">Account Name</p>
+                    <p className="font-semibold text-sm uppercase">
+                      {account.account_name}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* STEPS */}
             <div className="space-y-3 text-sm">
               {[
                 "Open your banking app",
@@ -181,7 +187,6 @@ export default function AddFundPage() {
           </>
         )}
 
-        {/* ------------------ CRYPTO UI ------------------ */}
         {method === "crypto" && (
           <>
             <div className="grid grid-cols-2 gap-3">

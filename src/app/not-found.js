@@ -29,7 +29,7 @@ export default function NotFound() {
 
         <p className="text-xs uppercase tracking-[0.4em] text-gray-400">404 Error</p>
 
-        <h1 className="mt-4 text-5xl font-extrabold bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
+        <h1 className="mt-4 text-5xl font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
           Page not found
         </h1>
 
@@ -58,3 +58,4 @@ export default function NotFound() {
     </div>
   )
 }
+

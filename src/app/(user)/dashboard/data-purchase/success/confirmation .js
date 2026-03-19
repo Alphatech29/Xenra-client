@@ -165,7 +165,7 @@ Ref: ${ref}`;
           ref={printRef}
           className="w-115 bg-[#020617] text-white rounded-[28px] overflow-hidden border border-white/10"
         >
-          <div className="bg-linear-to-r from-blue-600 to-indigo-600 px-8 py-7">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-7">
             <p className="text-xs uppercase tracking-widest text-blue-100/70">
               Payment Receipt
             </p>
